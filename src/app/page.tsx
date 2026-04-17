@@ -108,7 +108,7 @@ export default function Home() {
         <section style={{ minHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "60px 24px" }}>
           {/* Mascot */}
           <div style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(30px)", transition: "all 1s cubic-bezier(0.16,1,0.3,1)", marginBottom: 24 }}>
-            <img src="/mascot-1.png" alt="Orthrus" style={{ width: "min(320px, 70vw)", height: "auto", filter: "drop-shadow(0 0 40px rgba(0,245,255,0.4)) drop-shadow(0 0 60px rgba(255,0,225,0.3))" }} onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/mascot-1.svg"; }} />
+            <img src="/mascot-1.jpg" alt="Orthrus" style={{ width: "min(340px, 70vw)", height: "auto", borderRadius: 20, filter: "drop-shadow(0 0 40px rgba(0,245,255,0.4)) drop-shadow(0 0 60px rgba(255,0,225,0.3))" }} />
           </div>
 
           {/* Top meander border */}

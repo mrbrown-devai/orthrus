@@ -14,7 +14,7 @@ function DashboardLoading() {
 function DashboardContent() {
   const { agents, currentAgentId, setCurrentAgent, updateAgent, updateAgentPersonaWeight } = useChimeraStore();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"overview" | "settings" | "posts">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "autopilot" | "settings" | "posts">("overview");
 
   useEffect(() => {
     const twitterConnected = searchParams.get("twitter_connected");
@@ -81,7 +81,7 @@ function DashboardContent() {
           </div>
 
           <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: "1px solid rgba(0,245,255,0.1)", paddingBottom: 16 }}>
-            {(["overview", "settings", "posts"] as const).map(tab => (
+            {(["overview", "autopilot", "settings", "posts"] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)} style={{
                 padding: "10px 20px", borderRadius: 8, cursor: "pointer", border: "none",
                 background: activeTab === tab ? "rgba(0,245,255,0.1)" : "transparent",
@@ -126,6 +126,8 @@ function DashboardContent() {
               <PersonalityWeightCard agent={currentAgent} onWeightChange={(pId, w) => updateAgentPersonaWeight(currentAgent.id, pId, w)} />
             </div>
           )}
+
+          {activeTab === "autopilot" && <AutopilotTab agent={currentAgent} onUpdate={u => updateAgent(currentAgent.id, u)} />}
 
           {activeTab === "settings" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -290,4 +292,185 @@ function formatNumber(n: number): string {
   if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
   if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
   return n.toString();
+}
+
+// ====== AUTOPILOT TAB ======
+function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: Partial<ChimeraAgent>) => void }) {
+  const [balance, setBalance] = useState<{ sol: number; tokens: any[] } | null>(null);
+  const [running, setRunning] = useState(false);
+  const [lastResult, setLastResult] = useState<any>(null);
+  const mode = agent.autopilotMode || "manual";
+  const interval = agent.autopilotInterval || 4;
+  const actions = agent.autopilotActions || [];
+  const { addAutopilotAction } = useChimeraStore();
+
+  const traits = agent.personas.flatMap(p => p.analysis?.traits || []);
+
+  const fetchBalance = async () => {
+    try {
+      const res = await fetch("/api/agent/balance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId: agent.id }) });
+      const d = await res.json();
+      if (d.success) setBalance({ sol: d.sol, tokens: d.tokens });
+    } catch (e) { console.error(e); }
+  };
+
+  useEffect(() => { fetchBalance(); }, [agent.id]);
+
+  const runAutopilot = async () => {
+    setRunning(true); setLastResult(null);
+    try {
+      const res = await fetch("/api/agent/autopilot", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentId: agent.id,
+          traits,
+          ownTokenMint: agent.tokenCA,
+        }),
+      });
+      const d = await res.json();
+      setLastResult(d);
+      if (d.success && d.action) {
+        addAutopilotAction(agent.id, {
+          id: `ap_${Date.now()}`,
+          timestamp: Date.now(),
+          type: d.action.type,
+          reason: d.action.reason,
+          signature: d.signature,
+          solscanUrl: d.solscanUrl,
+          success: !!d.success,
+          error: d.error,
+        });
+        fetchBalance(); // refresh
+      }
+    } catch (e) {
+      setLastResult({ error: e instanceof Error ? e.message : "Failed" });
+    } finally { setRunning(false); }
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Wallet Balance */}
+      <div style={{ background: "rgba(0,255,163,0.04)", border: "1px solid rgba(0,255,163,0.2)", borderRadius: 16, padding: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#00FFA3", letterSpacing: 3, textTransform: "uppercase" }}>\uD83D\uDC15 Beast Wallet</div>
+          {agent.walletAddress && (
+            <a href={`https://solscan.io/account/${agent.walletAddress}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#00F5FF" }}>Solscan \u2197</a>
+          )}
+        </div>
+        {agent.walletAddress && (
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 16, wordBreak: "break-all" }}>{agent.walletAddress}</div>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <div>
+            <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 32, color: "#00FFA3" }}>
+              {balance ? balance.sol.toFixed(4) : "\u2014"}
+            </div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: 1 }}>SOL</div>
+          </div>
+          {balance && balance.tokens.length > 0 && (
+            <div>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 32, color: "#FF00E1" }}>{balance.tokens.length}</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: 1 }}>TOKENS</div>
+            </div>
+          )}
+        </div>
+        <button onClick={fetchBalance} style={{ marginTop: 16, padding: "8px 16px", borderRadius: 8, cursor: "pointer", background: "rgba(0,245,255,0.08)", border: "1px solid rgba(0,245,255,0.2)", color: "#00F5FF", fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>Refresh</button>
+      </div>
+
+      {/* Autopilot Mode */}
+      <div style={{ background: "rgba(153,69,255,0.04)", border: "1px solid rgba(153,69,255,0.2)", borderRadius: 16, padding: 24 }}>
+        <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#9945FF", letterSpacing: 3, textTransform: "uppercase", marginBottom: 16 }}>\uD83E\uDD16 Autopilot Mode</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}>
+          {(["manual", "on-post", "scheduled"] as const).map(m => (
+            <button key={m} onClick={() => onUpdate({ autopilotMode: m })} style={{
+              padding: 14, borderRadius: 10, cursor: "pointer",
+              background: mode === m ? "rgba(153,69,255,0.2)" : "rgba(255,255,255,0.03)",
+              border: `1px solid ${mode === m ? "rgba(153,69,255,0.5)" : "rgba(255,255,255,0.06)"}`,
+              color: mode === m ? "#9945FF" : "rgba(255,255,255,0.5)",
+              fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: 1, textTransform: "uppercase",
+            }}>{m}</button>
+          ))}
+        </div>
+        {mode === "scheduled" && (
+          <div>
+            <label style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 8, letterSpacing: 1, textTransform: "uppercase" }}>Interval: {interval}h</label>
+            <input type="range" min={1} max={24} value={interval} onChange={e => onUpdate({ autopilotInterval: Number(e.target.value) })} style={{ width: "100%", accentColor: "#9945FF" }} />
+          </div>
+        )}
+        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 12, lineHeight: 1.6 }}>
+          {mode === "manual" && "Click 'Run Autopilot Now' to trigger one action based on persona traits."}
+          {mode === "on-post" && "Autopilot runs after every X post. Chain posting with on-chain actions."}
+          {mode === "scheduled" && `Autopilot runs every ${interval}h automatically. Stays active while dashboard is open.`}
+        </p>
+      </div>
+
+      {/* Run Button */}
+      <button onClick={runAutopilot} disabled={running || !agent.walletAddress} style={{
+        width: "100%", padding: 18, borderRadius: 12, cursor: running || !agent.walletAddress ? "not-allowed" : "pointer",
+        background: running ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg, #00F5FF, #9945FF, #FF00E1)",
+        border: "none", color: running ? "rgba(255,255,255,0.3)" : "#000",
+        fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 14, letterSpacing: 3, textTransform: "uppercase",
+        boxShadow: running ? "none" : "0 0 30px rgba(0,245,255,0.3), 0 0 50px rgba(255,0,225,0.2)",
+      }}>
+        {running ? "EXECUTING..." : "\uD83D\uDE80 RUN AUTOPILOT NOW"}
+      </button>
+
+      {/* Last Result */}
+      {lastResult && (
+        <div style={{ background: lastResult.success ? "rgba(0,255,163,0.08)" : "rgba(255,0,225,0.08)", border: `1px solid ${lastResult.success ? "rgba(0,255,163,0.3)" : "rgba(255,0,225,0.3)"}`, borderRadius: 12, padding: 16 }}>
+          <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 12, color: lastResult.success ? "#00FFA3" : "#FF00E1", marginBottom: 8, letterSpacing: 1 }}>
+            {lastResult.success ? "\u2713 EXECUTED" : "\u26A0 FAILED"}
+          </div>
+          {lastResult.action && (
+            <>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>Action: {lastResult.action.type}</div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{lastResult.action.reason}</div>
+            </>
+          )}
+          {lastResult.signature && (
+            <a href={lastResult.solscanUrl} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginTop: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#00F5FF", wordBreak: "break-all" }}>
+              TX: {lastResult.signature} \u2197
+            </a>
+          )}
+          {lastResult.error && (
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#FF00E1", marginTop: 4 }}>{lastResult.error}</div>
+          )}
+        </div>
+      )}
+
+      {/* Persona Triggers Info */}
+      <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(0,245,255,0.1)", borderRadius: 12, padding: 20 }}>
+        <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 12 }}>Active Persona Traits</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {traits.map((t, i) => <span key={i} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "4px 10px", borderRadius: 6, background: "rgba(0,245,255,0.08)", color: "#00F5FF", border: "1px solid rgba(0,245,255,0.2)" }}>{t}</span>)}
+        </div>
+        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 12, lineHeight: 1.7 }}>
+          Traits like <b style={{ color: "#FF00E1" }}>aggressive/memetic</b> \u2192 buy own token \u2022 <b style={{ color: "#00FFA3" }}>generous/wholesome</b> \u2192 tip users \u2022 <b style={{ color: "#00F5FF" }}>analytical</b> \u2192 swap strategy
+        </p>
+      </div>
+
+      {/* Action Log */}
+      <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: 20 }}>
+        <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 16 }}>Action Log</div>
+        {actions.length === 0 ? (
+          <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>No actions yet. Run autopilot to start.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {actions.slice(0, 10).map(a => (
+              <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: a.success ? "rgba(0,255,163,0.04)" : "rgba(255,0,225,0.04)", borderRadius: 8, border: `1px solid ${a.success ? "rgba(0,255,163,0.15)" : "rgba(255,0,225,0.15)"}` }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: a.success ? "#00FFA3" : "#FF00E1" }}>{a.type}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{a.reason}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "rgba(255,255,255,0.3)" }}>{new Date(a.timestamp).toLocaleTimeString()}</div>
+                  {a.solscanUrl && <a href={a.solscanUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#00F5FF" }}>TX \u2197</a>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

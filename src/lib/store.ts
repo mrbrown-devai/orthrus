@@ -70,6 +70,24 @@ export interface ChimeraAgent {
   
   // Recent posts
   recentPosts: AgentPost[];
+
+  // Autopilot (Solana Agent Kit integration)
+  walletAddress?: string;
+  autopilotMode?: "manual" | "on-post" | "scheduled";
+  autopilotInterval?: number; // hours
+  lastAutopilotAt?: number;
+  autopilotActions?: AutopilotActionLog[];
+}
+
+export interface AutopilotActionLog {
+  id: string;
+  timestamp: number;
+  type: string;
+  reason: string;
+  signature?: string;
+  solscanUrl?: string;
+  success: boolean;
+  error?: string;
 }
 
 export interface TelegramUser {
@@ -102,6 +120,7 @@ interface ChimeraStore {
   
   addTelegramChat: (agentId: string, chatId: string) => void;
   removeTelegramChat: (agentId: string, chatId: string) => void;
+  addAutopilotAction: (agentId: string, action: AutopilotActionLog) => void;
   addPost: (agentId: string, post: AgentPost) => void;
   incrementPostCount: (agentId: string) => void;
   incrementReplyCount: (agentId: string) => void;
@@ -215,6 +234,19 @@ export const useChimeraStore = create<ChimeraStore>()(
           agents: state.agents.map((a) =>
             a.id === agentId
               ? { ...a, telegramChatIds: (a.telegramChatIds || []).filter((id) => id !== chatId) }
+              : a
+          ),
+        })),
+
+      addAutopilotAction: (agentId, action) =>
+        set((state) => ({
+          agents: state.agents.map((a) =>
+            a.id === agentId
+              ? {
+                  ...a,
+                  autopilotActions: [action, ...(a.autopilotActions || [])].slice(0, 20),
+                  lastAutopilotAt: action.timestamp,
+                }
               : a
           ),
         })),

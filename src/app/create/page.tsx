@@ -49,6 +49,7 @@ export default function CreatePage() {
 
   // Generated wallet
   const [generatedWallet, setGeneratedWallet] = useState<{ address: string; privateKey: string } | null>(null);
+  const [agentId] = useState(() => `orthrus_${Date.now()}`);
 
   const analyzePersona = async (persona: PersonaInput): Promise<PersonaAnalysis> => {
     const res = await fetch("/api/analyze", {
@@ -98,7 +99,17 @@ export default function CreatePage() {
       // Generate Orthrus wallet
       const walletRes = await fetch("/api/generate-wallet", { method: "POST" });
       const walletData = await walletRes.json();
-      if (walletData.success) setGeneratedWallet({ address: walletData.address, privateKey: walletData.privateKey });
+      if (walletData.success) {
+        setGeneratedWallet({ address: walletData.address, privateKey: walletData.privateKey });
+        // ALSO store encrypted copy on server for autopilot (dual-key model)
+        try {
+          await fetch("/api/agent/store-key", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agentId, privateKey: walletData.privateKey }),
+          });
+        } catch (e) { console.log("Failed to store encrypted key:", e); }
+      }
 
       setPaymentDone(true);
       setTimeout(() => setStep(4), 500);
@@ -136,7 +147,7 @@ export default function CreatePage() {
 
   const handleDeploy = () => {
     const agent: ChimeraAgent = {
-      id: `orthrus_${Date.now()}`,
+      id: agentId,
       name: agentName,
       description: `Fusion of ${personaA.name} \u00D7 ${personaB.name}`,
       personas: [
@@ -149,6 +160,10 @@ export default function CreatePage() {
       postsToday: 0, totalPosts: 0, impressionsToday: 0, totalImpressions: 0, repliesToday: 0,
       isActive: false, postsPerDay: 5, replyToMentions: true, memeGenerationEnabled: false, memePrompt: "",
       xConnected: false, telegramConnected: false,
+      walletAddress: generatedWallet?.address,
+      autopilotMode: "manual",
+      autopilotInterval: 4,
+      autopilotActions: [],
       activePlatforms: ["x"] as any,
       recentPosts: [],
     };
