@@ -250,70 +250,63 @@ export default function CreatePage() {
             </div>
           </div>
 
-          <button onClick={() => setStep(3)} style={BTN_NEON}>Continue to Payment →</button>
+          <button onClick={async () => {
+            // Free beta: skip payment, just generate wallet
+            setIsPaying(true); setError(null);
+            try {
+              const walletRes = await fetch("/api/generate-wallet", { method: "POST" });
+              const walletData = await walletRes.json();
+              if (walletData.success) {
+                setGeneratedWallet({ address: walletData.address, privateKey: walletData.privateKey });
+                try {
+                  await fetch("/api/agent/store-key", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ agentId, privateKey: walletData.privateKey }),
+                  });
+                } catch (e) { console.log("Failed to store key:", e); }
+                setPaymentDone(true);
+                setStep(3);
+              }
+            } catch (e) { setError("Wallet generation failed."); }
+            finally { setIsPaying(false); }
+          }} disabled={isPaying} style={isPaying ? BTN_DISABLED : BTN_NEON}>
+            {isPaying ? "FORGING..." : "FORGE BEAST (FREE BETA) →"}
+          </button>
         </div>
       )}
 
-      {/* Step 3: Pay */}
+      {/* Step 3: Beast Forged (wallet info) */}
       {step === 3 && (
         <div>
-          <h2 style={H2}>Forge the Beast</h2>
-          <p style={SUB}>Pay {FUSION_PRICE_SOL} SOL to forge your Orthrus.</p>
-          {error && <ErrorBox message={error} />}
+          <h2 style={H2}>Beast Forged</h2>
+          <p style={SUB}>Your Orthrus wallet has been generated. Save the private key \u2014 you can take custody anytime.</p>
 
-          <div style={{ background: "rgba(153,69,255,0.05)", border: "1px solid rgba(153,69,255,0.3)", borderRadius: 16, padding: 32, textAlign: "center", marginBottom: 24, boxShadow: "0 0 30px rgba(153,69,255,0.1)" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>💎</div>
-            <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 56, background: "linear-gradient(135deg, #00F5FF, #9945FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: 8, letterSpacing: 2 }}>
-              {FUSION_PRICE_SOL} SOL
-            </div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 24 }}>One-time fusion fee</div>
+          <div style={{ background: "linear-gradient(135deg, rgba(0,245,255,0.05), rgba(255,0,225,0.05))", border: "1px solid rgba(0,245,255,0.3)", borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: "0 0 30px rgba(0,245,255,0.1)" }}>
+            <div style={{ fontSize: 48, marginBottom: 16, textAlign: "center" }}>🐕</div>
+            <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 14, color: "#00F5FF", letterSpacing: 3, textTransform: "uppercase", marginBottom: 16, textAlign: "center" }}>Beast Wallet Ready</div>
 
-            <div style={{ textAlign: "left", background: "rgba(0,0,0,0.3)", borderRadius: 12, padding: 20, marginBottom: 24 }}>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.6)", marginBottom: 12 }}>What you get:</div>
-              {[
-                "Fused AI persona (Claude-analyzed)",
-                "Dedicated Solana wallet for the beast",
-                "PumpFun memecoin launch integration",
-                "Autonomous X posting (shitposting mode)",
-                "10 posts + 10 replies per day",
-              ].map((item, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <span style={{ color: "#00F5FF", fontSize: 14 }}>\u2713</span>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{item}</span>
+            {generatedWallet && (
+              <>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Public Address</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#00F5FF", wordBreak: "break-all", background: "rgba(0,0,0,0.3)", padding: 10, borderRadius: 8, border: "1px solid rgba(0,245,255,0.15)" }}>{generatedWallet.address}</div>
                 </div>
-              ))}
-            </div>
-
-            {txSignature && (
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 16, wordBreak: "break-all" }}>
-                TX: {txSignature}
-              </div>
-            )}
-
-            {paymentDone ? (
-              <div style={{ background: "rgba(0,245,255,0.1)", border: "1px solid rgba(0,245,255,0.3)", borderRadius: 12, padding: 16 }}>
-                <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 14, color: "#00F5FF", letterSpacing: 2 }}>\u2713 PAYMENT CONFIRMED</div>
-                {generatedWallet && (
-                  <div style={{ marginTop: 12, textAlign: "left" }}>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>Orthrus Wallet:</div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#00F5FF", wordBreak: "break-all", marginBottom: 8 }}>{generatedWallet.address}</div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#FF00E1", marginBottom: 4 }}>Private Key (save this!):</div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.6)", wordBreak: "break-all", background: "rgba(255,0,225,0.1)", padding: 8, borderRadius: 6, border: "1px solid rgba(255,0,225,0.2)" }}>{generatedWallet.privateKey}</div>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#FF00E1", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>\u26A0 Private Key (Save This!)</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.75)", wordBreak: "break-all", background: "rgba(255,0,225,0.08)", padding: 10, borderRadius: 8, border: "1px solid rgba(255,0,225,0.2)" }}>{generatedWallet.privateKey}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 8, lineHeight: 1.6 }}>
+                    This key gives full control of the beast's wallet. Save it securely. We also store an encrypted copy so the beast can act autonomously.
                   </div>
-                )}
-              </div>
-            ) : !connected ? (
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <WalletMultiButton style={{ background: "linear-gradient(135deg, #00F5FF, #9945FF, #FF00E1)", borderRadius: 12, height: 48, fontSize: 14, fontFamily: "'Orbitron', sans-serif", fontWeight: 700 }} />
-              </div>
-            ) : (
-              <button onClick={handlePayment} disabled={isPaying} style={isPaying ? BTN_DISABLED : BTN_NEON}>
-                {isPaying ? "Processing..." : `PAY ${FUSION_PRICE_SOL} SOL`}
-              </button>
+                </div>
+              </>
             )}
+
+            <div style={{ background: "rgba(0,255,163,0.08)", border: "1px solid rgba(0,255,163,0.25)", borderRadius: 10, padding: 12, textAlign: "center", marginTop: 8 }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#00FFA3" }}>🎉 FREE DURING BETA</span>
+            </div>
           </div>
 
-          {paymentDone && <button onClick={() => setStep(4)} style={BTN_NEON}>Continue →</button>}
+          <button onClick={() => setStep(4)} style={BTN_NEON}>Continue →</button>
         </div>
       )}
 
