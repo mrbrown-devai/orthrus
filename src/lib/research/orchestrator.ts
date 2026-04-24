@@ -98,8 +98,8 @@ export async function researchFusionDynamics(
   personaB: any,
   weightA: number
 ): Promise<any> {
-  const Anthropic = (await import("@anthropic-ai/sdk")).default;
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const { createAnthropicClient } = await import("@/lib/anthropic");
+  const client = createAnthropicClient();
 
   const prompt = `Analyze the fusion of two personas into a single autonomous AI agent.
 

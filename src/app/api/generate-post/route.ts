@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+import { createAnthropicClient } from "@/lib/anthropic";
 
 // Generate AI posts based on fused personas
 export async function POST(req: NextRequest) {
@@ -77,6 +75,7 @@ ${context ? `CONTEXT: ${context}\n` : ""}
 
 Output ONLY the post text. No preamble, no quotes, no explanations.`;
 
+  const anthropic = createAnthropicClient();
   const response = await anthropic.messages.create({
     model: "claude-haiku-4-5",
     max_tokens: 400,
