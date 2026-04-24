@@ -1,7 +1,7 @@
 // Deep persona research using Claude with native web search tool
 // Claude autonomously searches the web, reads sources, and synthesizes
 
-import { createAnthropicClient, isOAuthToken } from "@/lib/anthropic";
+import { createAnthropicClient } from "@/lib/anthropic";
 
 export interface ClaudeResearchResult {
   analysis: any; // parsed JSON from Claude
@@ -117,21 +117,16 @@ export async function researchPersonaWithClaude(
   );
 
   const client = createAnthropicClient();
-  // OAuth tokens (Claude Max) may not support the web_search beta tool
-  // Fall back to training-data-only analysis when using OAuth
-  const useWebSearch = !isOAuthToken();
   const response = await client.messages.create({
     model: "claude-sonnet-4-5",
     max_tokens: 8000,
-    ...(useWebSearch ? {
-      tools: [
-        {
-          type: "web_search_20250305",
-          name: "web_search",
-          max_uses: 8,
-        } as any,
-      ],
-    } : {}),
+    tools: [
+      {
+        type: "web_search_20250305",
+        name: "web_search",
+        max_uses: 8,
+      } as any,
+    ],
     messages: [{ role: "user", content: prompt }],
   });
 
