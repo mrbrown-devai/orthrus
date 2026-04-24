@@ -46,6 +46,8 @@ export default function CreatePage() {
   const [tokenName, setTokenName] = useState("");
   const [tokenSymbol, setTokenSymbol] = useState("");
   const [tokenDesc, setTokenDesc] = useState("");
+  const [tokenImageData, setTokenImageData] = useState<string | null>(null); // base64 data URL
+  const [tokenImageName, setTokenImageName] = useState<string>("");
   const [isLaunching, setIsLaunching] = useState(false);
   const [launchResult, setLaunchResult] = useState<any>(null);
 
@@ -151,6 +153,7 @@ export default function CreatePage() {
             { name: personaA.name, weight },
             { name: personaB.name, weight: 100 - weight },
           ],
+          imageDataUrl: tokenImageData, // optional user-uploaded image as data URL
         }),
       });
       const data = await res.json();
@@ -481,6 +484,54 @@ export default function CreatePage() {
                   <InputField label="Token Name" value={tokenName} onChange={setTokenName} placeholder="e.g. Orthrus Coin" />
                   <InputField label="Symbol" value={tokenSymbol} onChange={v => setTokenSymbol(v.toUpperCase().slice(0, 6))} placeholder="ORTHRUS" />
                   <InputField label="Description" value={tokenDesc} onChange={setTokenDesc} placeholder="Describe the beast..." />
+
+                  {/* Image upload */}
+                  <div>
+                    <label style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>Token Image (optional)</label>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                      <label style={{
+                        flex: 1, cursor: "pointer",
+                        background: "rgba(0,0,0,0.3)", border: "1px dashed rgba(255,255,255,0.2)",
+                        borderRadius: 8, padding: "14px 16px", textAlign: "center",
+                        fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
+                        color: "rgba(255,255,255,0.6)", transition: "all 0.2s",
+                      }}>
+                        📁 {tokenImageName || "Click to upload (PNG/JPG/GIF, max 2MB)"}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/gif,image/webp"
+                          style={{ display: "none" }}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 2 * 1024 * 1024) {
+                              setError("Image must be under 2MB");
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              setTokenImageData(reader.result as string);
+                              setTokenImageName(file.name);
+                              setError(null);
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                      {tokenImageData && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <img src={tokenImageData} alt="preview" style={{ width: 50, height: 50, borderRadius: 8, objectFit: "cover", border: "1px solid rgba(0,245,255,0.3)" }} />
+                          <button
+                            onClick={() => { setTokenImageData(null); setTokenImageName(""); }}
+                            style={{ background: "rgba(255,0,225,0.1)", border: "1px solid rgba(255,0,225,0.3)", color: "#FF00E1", padding: "6px 10px", borderRadius: 6, cursor: "pointer", fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}
+                          >✕</button>
+                        </div>
+                      )}
+                    </div>
+                    <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 6, lineHeight: 1.5 }}>
+                      If no image provided, the Orthrus logo will be used.
+                    </p>
+                  </div>
                 </div>
                 <button onClick={handleLaunchToken} disabled={isLaunching || !tokenName || !tokenSymbol} style={(tokenName && tokenSymbol && !isLaunching) ? { ...BTN_NEON, background: "linear-gradient(135deg, #00FFA3, #9945FF)" } : BTN_DISABLED}>
                   {isLaunching ? "Launching..." : "🚀 LAUNCH ON PUMPFUN"}

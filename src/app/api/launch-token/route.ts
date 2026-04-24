@@ -8,7 +8,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://orthrus-theta.vercel
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, symbol, description, creatorWallet, personas, imageUrl, twitter, telegram, website } = await request.json();
+    const { name, symbol, description, creatorWallet, personas, imageDataUrl, imageUrl, twitter, telegram, website } = await request.json();
 
     if (!name || !symbol) {
       return NextResponse.json({ error: "Token name and symbol required" }, { status: 400 });
@@ -20,13 +20,29 @@ export async function POST(request: NextRequest) {
     const personaDesc = personas?.map((p: any) => `${p.name} (${p.weight}%)`).join(" x ") || "";
     const fullDescription = description || `${name} ($${symbol}) - An Orthrus fusion of ${personaDesc}. Forged on orthrus.fun`;
 
-    // 1. Fetch an image to attach (default to Orthrus logo)
-    const imgSource = imageUrl || `${APP_URL}/logo.png`;
+    // 1. Prepare image blob — priority: user-uploaded data URL > user-provided imageUrl > Orthrus logo
     let imageBlob: Blob | null = null;
-    try {
-      const imgRes = await fetch(imgSource);
-      if (imgRes.ok) imageBlob = await imgRes.blob();
-    } catch (e) { console.log("[launch-token] failed to fetch image:", e); }
+
+    if (imageDataUrl && typeof imageDataUrl === "string" && imageDataUrl.startsWith("data:")) {
+      // Decode base64 data URL into a blob
+      try {
+        const match = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) {
+          const mime = match[1];
+          const b64 = match[2];
+          const buf = Buffer.from(b64, "base64");
+          imageBlob = new Blob([buf], { type: mime });
+        }
+      } catch (e) { console.log("[launch-token] failed to decode image data URL:", e); }
+    }
+
+    if (!imageBlob) {
+      const imgSource = imageUrl || `${APP_URL}/logo.png`;
+      try {
+        const imgRes = await fetch(imgSource);
+        if (imgRes.ok) imageBlob = await imgRes.blob();
+      } catch (e) { console.log("[launch-token] failed to fetch default image:", e); }
+    }
 
     if (!imageBlob) {
       return NextResponse.json({ error: "Failed to prepare token image. Try again." }, { status: 500 });
