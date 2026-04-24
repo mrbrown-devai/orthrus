@@ -77,6 +77,16 @@ export interface ChimeraAgent {
   autopilotInterval?: number; // hours
   lastAutopilotAt?: number;
   autopilotActions?: AutopilotActionLog[];
+
+  // Subscription Plan
+  plan?: "free" | "degen" | "alpha" | "whale";
+  planSubscribedAt?: number;
+  planPaymentTx?: string;
+  planPaymentCurrency?: string;
+
+  // Forge fee tracking
+  forgePaymentTx?: string;
+  forgePaymentCurrency?: string;
 }
 
 export interface AutopilotActionLog {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
+import { PUMP_FUN_REFERRAL_WALLET } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,6 +33,8 @@ export async function POST(request: NextRequest) {
             slippage: 10,
             priorityFee: 0.0005,
             pool: "pump",
+            // Orthrus referral wallet earns passive revenue on every trade
+            referralAddress: PUMP_FUN_REFERRAL_WALLET,
           }),
         });
         if (response.ok) {

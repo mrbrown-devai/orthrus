@@ -2,16 +2,59 @@
 export const NETWORK = "mainnet-beta";
 export const SOLANA_RPC_URL = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
 
+// Beta Flag - while true, all payments are bypassed (free for testing)
+export const BETA_FREE = true;
+
 // Payment Configuration
-export const FUSION_PRICE_SOL = 1; // 1 SOL to use the platform
 export const TREASURY_ADDRESS = "53tyNpNDS8yQQY58RBG8xVULJk2GMK4Vra6XzpETpvGR";
+export const FORGE_FEE_USDT = 10;   // One-time fee to forge an Orthrus
+export const FORGE_FEE_SOL = 0.12;  // SOL equivalent (~$10 at $85/SOL)
+
+// USDT on Solana (Tether)
+export const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB";
+export const USDT_DECIMALS = 6;
+
+// Plan Tiers — monthly pricing
+export type PlanId = "free" | "degen" | "alpha" | "whale";
+
+export interface PlanConfig {
+  id: PlanId;
+  name: string;
+  postsPerDay: number;
+  repliesPerDay: number;
+  autopilot: boolean;
+  priceUsdt: number;
+  priceSol: number;
+  color: string;
+  features: string[];
+}
+
+export const PLANS: Record<PlanId, PlanConfig> = {
+  free: {
+    id: "free", name: "Free", postsPerDay: 3, repliesPerDay: 0, autopilot: false,
+    priceUsdt: 0, priceSol: 0, color: "#9E9E9E",
+    features: ["3 posts/day", "No replies", "Manual posting only", "Community voting"],
+  },
+  degen: {
+    id: "degen", name: "Degen", postsPerDay: 10, repliesPerDay: 10, autopilot: true,
+    priceUsdt: 10, priceSol: 0.12, color: "#FF00E1",
+    features: ["10 posts/day", "10 replies/day", "Manual autopilot", "Basic on-chain actions"],
+  },
+  alpha: {
+    id: "alpha", name: "Alpha", postsPerDay: 30, repliesPerDay: 50, autopilot: true,
+    priceUsdt: 20, priceSol: 0.24, color: "#9945FF",
+    features: ["30 posts/day", "50 replies/day", "On-post autopilot", "All on-chain actions", "Priority queue"],
+  },
+  whale: {
+    id: "whale", name: "Whale", postsPerDay: 100, repliesPerDay: 200, autopilot: true,
+    priceUsdt: 125, priceSol: 1.47, color: "#00FFA3",
+    features: ["100 posts/day", "200 replies/day", "Scheduled autopilot", "All on-chain actions", "Priority queue", "Marketplace featured"],
+  },
+};
 
 // PumpFun Configuration
 export const PUMPFUN_API_URL = "https://pumpportal.fun/api";
-
-// Rate Limits
-export const DAILY_POST_LIMIT = 10;
-export const DAILY_REPLY_LIMIT = 10;
+export const PUMP_FUN_REFERRAL_WALLET = process.env.PUMP_FUN_REFERRAL_WALLET || TREASURY_ADDRESS;
 
 // Fusion limits
 export const MAX_PERSONAS_TO_FUSE = 2;
@@ -20,6 +63,7 @@ export const MAX_PERSONAS_TO_FUSE = 2;
 export const ORTHRUS_CYAN = "#00F5FF";
 export const ORTHRUS_MAGENTA = "#FF00E1";
 export const ORTHRUS_PURPLE = "#9945FF";
+export const ORTHRUS_GREEN = "#00FFA3";
 
 // Supported persona traits
 export const PERSONA_TRAITS = [
@@ -38,3 +82,8 @@ export const SUPPORTED_LAUNCHPADS = [
   { name: "Raydium", url: "https://raydium.io" },
   { name: "Jupiter", url: "https://jup.ag" },
 ] as const;
+
+// Legacy (kept for backward compat)
+export const FUSION_PRICE_SOL = FORGE_FEE_SOL;
+export const DAILY_POST_LIMIT = 10;
+export const DAILY_REPLY_LIMIT = 10;

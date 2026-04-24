@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useChimeraStore, PersonaAnalysis, ChimeraAgent } from "@/lib/store";
-import { FUSION_PRICE_SOL, TREASURY_ADDRESS } from "@/lib/constants";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { Transaction, SystemProgram, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { FORGE_FEE_USDT, FORGE_FEE_SOL } from "@/lib/constants";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { PaymentButton } from "@/components/PaymentButton";
 
 interface PersonaInput {
   name: string;
@@ -19,8 +18,7 @@ interface PersonaInput {
 export default function CreatePage() {
   const router = useRouter();
   const { addAgent, clearSelectedPersonas } = useChimeraStore();
-  const { publicKey, sendTransaction, connected } = useWallet();
-  const { connection } = useConnection();
+  const { publicKey } = useWallet();
 
   const [step, setStep] = useState(1);
   const [analyzing, setAnalyzing] = useState(false);
@@ -38,7 +36,8 @@ export default function CreatePage() {
   // Payment
   const [isPaying, setIsPaying] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
-  const [txSignature, setTxSignature] = useState<string | null>(null);
+  const [paymentSignature, setPaymentSignature] = useState<string | null>(null);
+  const [paymentCurrency, setPaymentCurrency] = useState<string | null>(null);
 
   // PumpFun launch
   const [tokenName, setTokenName] = useState("");
@@ -78,48 +77,6 @@ export default function CreatePage() {
     }
   };
 
-  const handlePayment = async () => {
-    if (!publicKey) { setError("Connect wallet first"); return; }
-    setIsPaying(true); setError(null);
-    try {
-      const treasuryPubkey = new PublicKey(TREASURY_ADDRESS);
-      const tx = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: treasuryPubkey,
-          lamports: Math.floor(FUSION_PRICE_SOL * LAMPORTS_PER_SOL),
-        })
-      );
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
-      tx.recentBlockhash = blockhash; tx.feePayer = publicKey;
-      const sig = await sendTransaction(tx, connection);
-      setTxSignature(sig);
-      await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
-
-      // Generate Orthrus wallet
-      const walletRes = await fetch("/api/generate-wallet", { method: "POST" });
-      const walletData = await walletRes.json();
-      if (walletData.success) {
-        setGeneratedWallet({ address: walletData.address, privateKey: walletData.privateKey });
-        // ALSO store encrypted copy on server for autopilot (dual-key model)
-        try {
-          await fetch("/api/agent/store-key", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agentId, privateKey: walletData.privateKey }),
-          });
-        } catch (e) { console.log("Failed to store encrypted key:", e); }
-      }
-
-      setPaymentDone(true);
-      setTimeout(() => setStep(4), 500);
-    } catch (err: any) {
-      let msg = "Payment failed.";
-      if (err.message?.includes("User rejected")) msg = "Cancelled.";
-      else if (err.message) msg = err.message;
-      setError(msg);
-    } finally { setIsPaying(false); }
-  };
 
   const handleLaunchToken = async () => {
     if (!tokenName || !tokenSymbol) return;
@@ -164,6 +121,9 @@ export default function CreatePage() {
       autopilotMode: "manual",
       autopilotInterval: 4,
       autopilotActions: [],
+      plan: "free",
+      forgePaymentTx: paymentSignature || undefined,
+      forgePaymentCurrency: paymentCurrency || undefined,
       activePlatforms: ["x"] as any,
       recentPosts: [],
     };
@@ -250,28 +210,34 @@ export default function CreatePage() {
             </div>
           </div>
 
-          <button onClick={async () => {
-            // Free beta: skip payment, just generate wallet
-            setIsPaying(true); setError(null);
-            try {
-              const walletRes = await fetch("/api/generate-wallet", { method: "POST" });
-              const walletData = await walletRes.json();
-              if (walletData.success) {
-                setGeneratedWallet({ address: walletData.address, privateKey: walletData.privateKey });
-                try {
-                  await fetch("/api/agent/store-key", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ agentId, privateKey: walletData.privateKey }),
-                  });
-                } catch (e) { console.log("Failed to store key:", e); }
-                setPaymentDone(true);
-                setStep(3);
-              }
-            } catch (e) { setError("Wallet generation failed."); }
-            finally { setIsPaying(false); }
-          }} disabled={isPaying} style={isPaying ? BTN_DISABLED : BTN_NEON}>
-            {isPaying ? "FORGING..." : "FORGE BEAST (FREE BETA) →"}
-          </button>
+          <PaymentButton
+            priceUsdt={FORGE_FEE_USDT}
+            priceSol={FORGE_FEE_SOL}
+            label="FORGE BEAST"
+            disabled={isPaying}
+            onSuccess={async (sig, cur) => {
+              setIsPaying(true); setError(null);
+              try {
+                const walletRes = await fetch("/api/generate-wallet", { method: "POST" });
+                const walletData = await walletRes.json();
+                if (walletData.success) {
+                  setGeneratedWallet({ address: walletData.address, privateKey: walletData.privateKey });
+                  setPaymentSignature(sig);
+                  setPaymentCurrency(cur);
+                  try {
+                    await fetch("/api/agent/store-key", {
+                      method: "POST", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ agentId, privateKey: walletData.privateKey }),
+                    });
+                  } catch (e) { console.log("Failed to store key:", e); }
+                  setPaymentDone(true);
+                  setStep(3);
+                }
+              } catch (e) { setError("Wallet generation failed."); }
+              finally { setIsPaying(false); }
+            }}
+            onError={msg => setError(msg)}
+          />
         </div>
       )}
 
