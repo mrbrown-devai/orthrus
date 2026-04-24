@@ -3,8 +3,9 @@
 // Gracefully degrades if UPSTASH_REDIS_URL + UPSTASH_REDIS_TOKEN not set.
 // Setup: https://upstash.com/ → create Redis → copy REST URL + token → add to Vercel env vars
 
-const URL = process.env.UPSTASH_REDIS_URL;
-const TOKEN = process.env.UPSTASH_REDIS_TOKEN;
+// Support both naming conventions (standard Upstash + short form)
+const URL = process.env.UPSTASH_REDIS_REST_URL || process.env.UPSTASH_REDIS_URL;
+const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.UPSTASH_REDIS_TOKEN;
 
 export function isKvConfigured(): boolean {
   return !!(URL && TOKEN);
