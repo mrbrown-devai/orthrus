@@ -109,7 +109,20 @@ export default function CreatePage() {
       setAnalyzePhase("🐕 Orthrus awakens");
       setTimeout(() => { setAnalyzing(false); setStep(2); }, 600);
     } catch (err: any) {
-      setError(err.message || "Analysis failed."); setAnalyzing(false);
+      // Friendly error messages
+      const raw = err.message || "Analysis failed.";
+      let friendly = raw;
+      if (raw.includes("invalid x-api-key") || raw.includes("authentication_error")) {
+        friendly = "AI service authentication error. Our team has been notified.";
+      } else if (raw.includes("rate_limit") || raw.includes("429")) {
+        friendly = "Too many requests right now. Try again in a minute.";
+      } else if (raw.includes("timeout") || raw.includes("AbortError")) {
+        friendly = "Research took too long. Try again or use a simpler web link.";
+      } else if (raw.length > 200) {
+        friendly = "Analysis failed. Please try again.";
+      }
+      setError(friendly);
+      setAnalyzing(false);
     }
   };
 
