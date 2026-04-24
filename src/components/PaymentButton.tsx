@@ -7,7 +7,7 @@ import { buildPaymentTransaction, PaymentCurrency } from "@/lib/payment";
 import { BETA_FREE } from "@/lib/constants";
 
 interface PaymentButtonProps {
-  priceUsdt: number;
+  priceUsdt: number; // kept for future USDT support, not displayed
   priceSol: number;
   label?: string;
   onSuccess: (signature: string, currency: PaymentCurrency) => void;
@@ -15,10 +15,9 @@ interface PaymentButtonProps {
   disabled?: boolean;
 }
 
-export function PaymentButton({ priceUsdt, priceSol, label = "Pay", onSuccess, onError, disabled }: PaymentButtonProps) {
+export function PaymentButton({ priceSol, label = "Pay", onSuccess, onError, disabled }: PaymentButtonProps) {
   const { publicKey, sendTransaction, connected } = useWallet();
   const { connection } = useConnection();
-  const [currency, setCurrency] = useState<PaymentCurrency>("SOL");
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,12 +39,11 @@ export function PaymentButton({ priceUsdt, priceSol, label = "Pay", onSuccess, o
     if (!publicKey) return;
     setPaying(true); setError(null);
     try {
-      const amount = currency === "SOL" ? priceSol : priceUsdt;
-      const tx = await buildPaymentTransaction(connection, publicKey, currency, amount);
+      const tx = await buildPaymentTransaction(connection, publicKey, "SOL", priceSol);
       const signature = await sendTransaction(tx, connection);
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
       await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
-      onSuccess(signature, currency);
+      onSuccess(signature, "SOL");
     } catch (err: any) {
       let msg = "Payment failed.";
       if (err.message?.includes("User rejected")) msg = "Cancelled.";
@@ -58,21 +56,6 @@ export function PaymentButton({ priceUsdt, priceSol, label = "Pay", onSuccess, o
 
   return (
     <div>
-      {/* Currency toggle */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        {(["SOL", "USDT"] as const).map(c => (
-          <button key={c} onClick={() => setCurrency(c)} style={{
-            flex: 1, padding: 14, borderRadius: 10, cursor: "pointer",
-            background: currency === c ? (c === "SOL" ? "rgba(153,69,255,0.2)" : "rgba(0,255,163,0.15)") : "rgba(255,255,255,0.03)",
-            border: `1px solid ${currency === c ? (c === "SOL" ? "rgba(153,69,255,0.5)" : "rgba(0,255,163,0.4)") : "rgba(255,255,255,0.06)"}`,
-            color: currency === c ? (c === "SOL" ? "#9945FF" : "#00FFA3") : "rgba(255,255,255,0.5)",
-            fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: 2,
-          }}>
-            {c === "SOL" ? `${priceSol} SOL` : `${priceUsdt} USDT`}
-          </button>
-        ))}
-      </div>
-
       {error && (
         <div style={{ background: "rgba(255,0,225,0.1)", border: "1px solid rgba(255,0,225,0.3)", borderRadius: 8, padding: 10, marginBottom: 12 }}>
           <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#FF00E1", margin: 0 }}>{error}</p>
@@ -85,7 +68,7 @@ export function PaymentButton({ priceUsdt, priceSol, label = "Pay", onSuccess, o
         </div>
       ) : (
         <button onClick={handlePay} disabled={paying || disabled} style={(paying || disabled) ? BTN_DISABLED : BTN_NEON}>
-          {paying ? "PROCESSING..." : `${label} ${currency === "SOL" ? priceSol + " SOL" : priceUsdt + " USDT"}`}
+          {paying ? "PROCESSING..." : `${label} ${priceSol} SOL`}
         </button>
       )}
     </div>

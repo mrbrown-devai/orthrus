@@ -36,7 +36,7 @@ export function suggestAction(
 
   // Needs at least 0.005 SOL for fees + minimum action
   if (balance < 0.005) {
-    return { type: "check_balance", reason: "Low balance \u2014 just checking" };
+    return { type: "check_balance", reason: "Low balance — just checking" };
   }
 
   // AGGRESSIVE / MEMETIC / CONTROVERSIAL → pump own token
@@ -88,5 +88,5 @@ export function suggestAction(
   }
 
   // Default: check balance (harmless passive action)
-  return { type: "check_balance", reason: "No trigger matched \u2014 passive tick" };
+  return { type: "check_balance", reason: "No trigger matched — passive tick" };
 }

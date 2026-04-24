@@ -68,7 +68,7 @@ function DashboardContent() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: currentAgent.isActive ? "#00F5FF" : "rgba(255,255,255,0.4)" }}>
-                {currentAgent.isActive ? "\u25CF LIVE" : "\u25CB PAUSED"}
+                {currentAgent.isActive ? "● LIVE" : "○ PAUSED"}
               </span>
               <button onClick={() => updateAgent(currentAgent.id, { isActive: !currentAgent.isActive })} style={{
                 padding: "10px 20px", borderRadius: 10, cursor: "pointer",
@@ -186,7 +186,7 @@ function PlatformCard({ platform, icon, connected, handle, url, onConnect }: any
           <span style={{ fontSize: 22 }}>{icon}</span>
           <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 14, color: "#fff", letterSpacing: 1 }}>{platform}</span>
         </div>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: connected ? "#00F5FF" : "rgba(255,255,255,0.4)" }}>{connected ? "\u25CF LINKED" : "\u25CB NOT LINKED"}</span>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: connected ? "#00F5FF" : "rgba(255,255,255,0.4)" }}>{connected ? "● LINKED" : "○ NOT LINKED"}</span>
       </div>
       {connected && handle ? (
         <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -352,9 +352,9 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
       {/* Wallet Balance */}
       <div style={{ background: "rgba(0,255,163,0.04)", border: "1px solid rgba(0,255,163,0.2)", borderRadius: 16, padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#00FFA3", letterSpacing: 3, textTransform: "uppercase" }}>\uD83D\uDC15 Beast Wallet</div>
+          <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#00FFA3", letterSpacing: 3, textTransform: "uppercase" }}>🐕 Beast Wallet</div>
           {agent.walletAddress && (
-            <a href={`https://solscan.io/account/${agent.walletAddress}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#00F5FF" }}>Solscan \u2197</a>
+            <a href={`https://solscan.io/account/${agent.walletAddress}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#00F5FF" }}>Solscan ↗</a>
           )}
         </div>
         {agent.walletAddress && (
@@ -363,7 +363,7 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <div>
             <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 32, color: "#00FFA3" }}>
-              {balance ? balance.sol.toFixed(4) : "\u2014"}
+              {balance ? balance.sol.toFixed(4) : "—"}
             </div>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: 1 }}>SOL</div>
           </div>
@@ -419,7 +419,7 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
       {lastResult && (
         <div style={{ background: lastResult.success ? "rgba(0,255,163,0.08)" : "rgba(255,0,225,0.08)", border: `1px solid ${lastResult.success ? "rgba(0,255,163,0.3)" : "rgba(255,0,225,0.3)"}`, borderRadius: 12, padding: 16 }}>
           <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 12, color: lastResult.success ? "#00FFA3" : "#FF00E1", marginBottom: 8, letterSpacing: 1 }}>
-            {lastResult.success ? "\u2713 EXECUTED" : "\u26A0 FAILED"}
+            {lastResult.success ? "✓ EXECUTED" : "⚠ FAILED"}
           </div>
           {lastResult.action && (
             <>
@@ -429,7 +429,7 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
           )}
           {lastResult.signature && (
             <a href={lastResult.solscanUrl} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginTop: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#00F5FF", wordBreak: "break-all" }}>
-              TX: {lastResult.signature} \u2197
+              TX: {lastResult.signature} ↗
             </a>
           )}
           {lastResult.error && (
@@ -445,7 +445,7 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
           {traits.map((t, i) => <span key={i} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "4px 10px", borderRadius: 6, background: "rgba(0,245,255,0.08)", color: "#00F5FF", border: "1px solid rgba(0,245,255,0.2)" }}>{t}</span>)}
         </div>
         <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 12, lineHeight: 1.7 }}>
-          Traits like <b style={{ color: "#FF00E1" }}>aggressive/memetic</b> \u2192 buy own token \u2022 <b style={{ color: "#00FFA3" }}>generous/wholesome</b> \u2192 tip users \u2022 <b style={{ color: "#00F5FF" }}>analytical</b> \u2192 swap strategy
+          Traits like <b style={{ color: "#FF00E1" }}>aggressive/memetic</b> → buy own token • <b style={{ color: "#00FFA3" }}>generous/wholesome</b> → tip users • <b style={{ color: "#00F5FF" }}>analytical</b> → swap strategy
         </p>
       </div>
 
@@ -464,7 +464,7 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "rgba(255,255,255,0.3)" }}>{new Date(a.timestamp).toLocaleTimeString()}</div>
-                  {a.solscanUrl && <a href={a.solscanUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#00F5FF" }}>TX \u2197</a>}
+                  {a.solscanUrl && <a href={a.solscanUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#00F5FF" }}>TX ↗</a>}
                 </div>
               </div>
             ))}

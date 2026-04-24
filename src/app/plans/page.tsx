@@ -29,7 +29,7 @@ export default function PlansPage() {
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px" }}>
       <div style={{ textAlign: "center", marginBottom: 40 }}>
         <h1 style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 40, color: "#fff", marginBottom: 8, letterSpacing: 4, background: "linear-gradient(90deg, #00F5FF, #9945FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>CHOOSE YOUR PLAN</h1>
-        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Pick a tier for your Orthrus agent. Pay in SOL or USDT.</p>
+        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, color: "rgba(255,255,255,0.5)" }}>Pick a tier for your Orthrus agent. Pay in SOL.</p>
         {BETA_FREE && (
           <div style={{ display: "inline-block", marginTop: 12, padding: "8px 16px", borderRadius: 20, background: "rgba(0,255,163,0.1)", border: "1px solid rgba(0,255,163,0.3)" }}>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#00FFA3" }}>🎉 ALL PLANS FREE DURING BETA</span>
@@ -39,7 +39,7 @@ export default function PlansPage() {
 
       {success && (
         <div style={{ background: "rgba(0,255,163,0.1)", border: "1px solid rgba(0,255,163,0.3)", borderRadius: 12, padding: 16, textAlign: "center", marginBottom: 24, maxWidth: 600, margin: "0 auto 24px" }}>
-          <p style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 14, color: "#00FFA3", letterSpacing: 2 }}>\u2713 {success}</p>
+          <p style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 14, color: "#00FFA3", letterSpacing: 2 }}>✓ {success}</p>
         </div>
       )}
 
@@ -68,20 +68,20 @@ export default function PlansPage() {
               <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 22, color: plan.color, letterSpacing: 2, marginBottom: 16 }}>{plan.name.toUpperCase()}</div>
 
               <div style={{ marginBottom: 20 }}>
-                {plan.priceUsdt === 0 ? (
+                {plan.priceSol === 0 ? (
                   <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 36, color: "#fff", letterSpacing: 1 }}>FREE</div>
                 ) : (
-                  <>
-                    <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 36, color: "#fff", letterSpacing: 1 }}>${plan.priceUsdt}<span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", fontWeight: 400 }}>/mo</span></div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: plan.color, marginTop: 4 }}>or {plan.priceSol} SOL</div>
-                  </>
+                  <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 36, color: "#fff", letterSpacing: 1 }}>
+                    {plan.priceSol} <span style={{ fontSize: 20, color: plan.color }}>SOL</span>
+                    <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", fontWeight: 400 }}>/mo</span>
+                  </div>
                 )}
               </div>
 
               <div style={{ borderTop: `1px solid ${plan.color}20`, paddingTop: 16, marginBottom: 20 }}>
                 {plan.features.map((f, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
-                    <span style={{ color: plan.color, fontSize: 12 }}>\u2713</span>
+                    <span style={{ color: plan.color, fontSize: 12 }}>✓</span>
                     <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{f}</span>
                   </div>
                 ))}
@@ -122,8 +122,8 @@ export default function PlansPage() {
 
       <div style={{ marginTop: 40, textAlign: "center" }}>
         <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.8 }}>
-          All plans: AI persona engine \u2022 PumpFun integration \u2022 Community voting \u2022 Marketplace access<br />
-          Cancel anytime. Pay-as-you-go in SOL or USDT.
+          All plans: AI persona engine • PumpFun integration • Community voting • Marketplace access<br />
+          Cancel anytime. Pay-as-you-go in SOL.
         </p>
       </div>
     </div>

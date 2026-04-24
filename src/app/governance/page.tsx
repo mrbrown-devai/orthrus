@@ -81,7 +81,7 @@ export default function GovernancePage() {
                     <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.6)", marginBottom: 10, lineHeight: 1.6 }}>{persona.description}</p>
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{persona.traits.map(t => <span key={t} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "3px 8px", borderRadius: 6, background: `${color}15`, color }}>{t}</span>)}</div>
                     {!match.hasVoted && connected && <button onClick={() => handleVote(match.id, side)} disabled={voting === match.id} style={{ width: "100%", marginTop: 12, padding: 10, borderRadius: 8, cursor: "pointer", background: `${color}15`, border: `1px solid ${color}40`, color, fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: 1 }}>{voting === match.id ? "..." : `VOTE`}</button>}
-                    {match.userVote === side && <div style={{ marginTop: 12, textAlign: "center", fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color }}>\u2713 Your pick</div>}
+                    {match.userVote === side && <div style={{ marginTop: 12, textAlign: "center", fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color }}>✓ Your pick</div>}
                   </div>
                 ))}
               </div>

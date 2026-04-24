@@ -10,9 +10,9 @@ interface Listing {
 }
 
 const MOCK_LISTINGS: Listing[] = [
-  { id: "l1", name: "CryptoVisionary", description: "Vitalik \u00D7 Elon Musk", price: 15, posts: 847, impressions: 2340000, featured: true, tokenTicker: "CVSN" },
-  { id: "l2", name: "MemeLord Supreme", description: "MrBeast \u00D7 Andrew Tate", price: 25, posts: 1203, impressions: 5670000, featured: true, tokenTicker: "MEME" },
-  { id: "l3", name: "PhiloTech", description: "Naval \u00D7 Joe Rogan", price: 8, posts: 562, impressions: 890000 },
+  { id: "l1", name: "CryptoVisionary", description: "Vitalik × Elon Musk", price: 15, posts: 847, impressions: 2340000, featured: true, tokenTicker: "CVSN" },
+  { id: "l2", name: "MemeLord Supreme", description: "MrBeast × Andrew Tate", price: 25, posts: 1203, impressions: 5670000, featured: true, tokenTicker: "MEME" },
+  { id: "l3", name: "PhiloTech", description: "Naval × Joe Rogan", price: 8, posts: 562, impressions: 890000 },
 ];
 
 export default function MarketplacePage() {
@@ -47,13 +47,13 @@ export default function MarketplacePage() {
               borderRadius: 16, padding: 24,
               boxShadow: l.featured ? "0 0 30px rgba(0,245,255,0.1)" : "none",
             }}>
-              {l.featured && <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 9, color: "#00F5FF", letterSpacing: 3, marginBottom: 12, fontWeight: 900 }}>\u2B50 FEATURED</div>}
+              {l.featured && <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 9, color: "#00F5FF", letterSpacing: 3, marginBottom: 12, fontWeight: 900 }}>⭐ FEATURED</div>}
               <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 20, color: "#fff", marginBottom: 6, letterSpacing: 1 }}>{l.name}</h4>
               <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 16 }}>{l.description}</p>
 
               <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>\uD83D\uDCDD {l.posts}</div>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>\uD83D\uDC41\uFE0F {(l.impressions/1e6).toFixed(1)}M</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>📝 {l.posts}</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>👁️ {(l.impressions/1e6).toFixed(1)}M</div>
                 {l.tokenTicker && <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#00FFA3" }}>${l.tokenTicker}</div>}
               </div>
 

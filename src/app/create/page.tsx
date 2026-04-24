@@ -70,7 +70,7 @@ export default function CreatePage() {
       const resultB = await analyzePersona(personaB); setAnalysisB(resultB); setAnalyzeProgress(80);
       setAnalyzePhase("Fusing heads..."); setAnalyzeProgress(95);
       await new Promise(r => setTimeout(r, 500));
-      setAnalyzePhase("Orthrus awakens \u2713"); setAnalyzeProgress(100);
+      setAnalyzePhase("Orthrus awakens ✓"); setAnalyzeProgress(100);
       setTimeout(() => { setAnalyzing(false); setStep(2); }, 500);
     } catch (err: any) {
       setError(err.message || "Analysis failed."); setAnalyzing(false);
@@ -87,7 +87,7 @@ export default function CreatePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: tokenName, symbol: tokenSymbol,
-          description: tokenDesc || `${tokenName} - An Orthrus fusion of ${personaA.name} \u00D7 ${personaB.name}`,
+          description: tokenDesc || `${tokenName} - An Orthrus fusion of ${personaA.name} × ${personaB.name}`,
           creatorWallet: publicKey?.toBase58(),
           personas: [
             { name: personaA.name, weight },
@@ -106,7 +106,7 @@ export default function CreatePage() {
     const agent: ChimeraAgent = {
       id: agentId,
       name: agentName,
-      description: `Fusion of ${personaA.name} \u00D7 ${personaB.name}`,
+      description: `Fusion of ${personaA.name} × ${personaB.name}`,
       personas: [
         { id: "a", name: personaA.name, xHandle: personaA.xHandle, instagram: personaA.instagram, tiktok: personaA.tiktok, analysis: analysisA || undefined, weight },
         { id: "b", name: personaB.name, xHandle: personaB.xHandle, instagram: personaB.instagram, tiktok: personaB.tiktok, analysis: analysisB || undefined, weight: 100 - weight },
@@ -245,7 +245,7 @@ export default function CreatePage() {
       {step === 3 && (
         <div>
           <h2 style={H2}>Beast Forged</h2>
-          <p style={SUB}>Your Orthrus wallet has been generated. Save the private key \u2014 you can take custody anytime.</p>
+          <p style={SUB}>Your Orthrus wallet has been generated. Save the private key — you can take custody anytime.</p>
 
           <div style={{ background: "linear-gradient(135deg, rgba(0,245,255,0.05), rgba(255,0,225,0.05))", border: "1px solid rgba(0,245,255,0.3)", borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: "0 0 30px rgba(0,245,255,0.1)" }}>
             <div style={{ fontSize: 48, marginBottom: 16, textAlign: "center" }}>🐕</div>
@@ -258,7 +258,7 @@ export default function CreatePage() {
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#00F5FF", wordBreak: "break-all", background: "rgba(0,0,0,0.3)", padding: 10, borderRadius: 8, border: "1px solid rgba(0,245,255,0.15)" }}>{generatedWallet.address}</div>
                 </div>
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#FF00E1", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>\u26A0 Private Key (Save This!)</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#FF00E1", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>⚠ Private Key (Save This!)</div>
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.75)", wordBreak: "break-all", background: "rgba(255,0,225,0.08)", padding: 10, borderRadius: 8, border: "1px solid rgba(255,0,225,0.2)" }}>{generatedWallet.privateKey}</div>
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 8, lineHeight: 1.6 }}>
                     This key gives full control of the beast's wallet. Save it securely. We also store an encrypted copy so the beast can act autonomously.
@@ -318,8 +318,8 @@ export default function CreatePage() {
           <div style={{ background: "rgba(0,245,255,0.03)", border: "1px solid rgba(0,245,255,0.15)", borderRadius: 12, padding: 20, marginBottom: 24 }}>
             <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 10, color: "#00F5FF", letterSpacing: 3, textTransform: "uppercase", marginBottom: 12 }}>Summary</div>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 2 }}>
-              <div>Name: {agentName || "\u2014"}</div>
-              <div>Fusion: {personaA.name} \u00D7 {personaB.name}</div>
+              <div>Name: {agentName || "—"}</div>
+              <div>Fusion: {personaA.name} × {personaB.name}</div>
               <div>Blend: {weight}% / {100 - weight}%</div>
               <div>X posting: Link after deploy</div>
               {launchResult && <div>Token: ${tokenSymbol}</div>}
@@ -346,7 +346,7 @@ const BTN_NEON: React.CSSProperties = { width: "100%", background: "linear-gradi
 const BTN_DISABLED: React.CSSProperties = { width: "100%", background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.3)", fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 14, letterSpacing: 3, padding: 16, borderRadius: 12, cursor: "not-allowed", textTransform: "uppercase" };
 
 function ErrorBox({ message }: { message: string }) {
-  return <div style={{ background: "rgba(255,0,225,0.1)", border: "1px solid rgba(255,0,225,0.3)", borderRadius: 12, padding: 16, marginBottom: 20 }}><p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#FF00E1", margin: 0 }}>\u26A0\uFE0F {message}</p></div>;
+  return <div style={{ background: "rgba(255,0,225,0.1)", border: "1px solid rgba(255,0,225,0.3)", borderRadius: 12, padding: 16, marginBottom: 20 }}><p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#FF00E1", margin: 0 }}>⚠️ {message}</p></div>;
 }
 function InputField({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder: string }) {
   return <div><label style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>{label}</label><input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 16px", color: "#fff", fontFamily: "'JetBrains Mono', monospace", fontSize: 13, outline: "none" }} /></div>;
