@@ -521,7 +521,10 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
       {/* Wallet Balance */}
       <div style={{ background: "rgba(0,255,163,0.04)", border: "1px solid rgba(0,255,163,0.2)", borderRadius: 16, padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#00FFA3", letterSpacing: 3, textTransform: "uppercase" }}>🐕 Beast Wallet</div>
+          <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#00FFA3", letterSpacing: 3, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8 }}>
+            <img src="/mint-icon.png" alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />
+            Beast Wallet
+          </div>
           {agent.walletAddress && (
             <a href={`https://solscan.io/account/${agent.walletAddress}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#00F5FF" }}>Solscan ↗</a>
           )}

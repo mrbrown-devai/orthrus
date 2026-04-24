@@ -409,7 +409,9 @@ export default function CreatePage() {
           <p style={SUB}>Your Orthrus wallet has been generated. Save the private key — you can take custody anytime.</p>
 
           <div style={{ background: "linear-gradient(135deg, rgba(0,245,255,0.05), rgba(255,0,225,0.05))", border: "1px solid rgba(0,245,255,0.3)", borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: "0 0 30px rgba(0,245,255,0.1)" }}>
-            <div style={{ fontSize: 48, marginBottom: 16, textAlign: "center" }}>🐕</div>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <img src="/mint-icon.png" alt="Beast Wallet" style={{ width: 96, height: 96, objectFit: "contain", filter: "drop-shadow(0 0 16px rgba(0,245,255,0.35))" }} />
+            </div>
             <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 14, color: "#00F5FF", letterSpacing: 3, textTransform: "uppercase", marginBottom: 16, textAlign: "center" }}>Beast Wallet Ready</div>
 
             {generatedWallet && (

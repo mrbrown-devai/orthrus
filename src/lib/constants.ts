@@ -1,8 +1,9 @@
 // Network Configuration - Solana
 export const NETWORK = "mainnet-beta";
-// Default: Ankr public RPC (CORS-friendly, no API key). For production,
-// set NEXT_PUBLIC_SOLANA_RPC_URL to a paid provider (Helius, QuickNode, Triton).
-export const SOLANA_RPC_URL = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://rpc.ankr.com/solana";
+// Default: PublicNode (Allnodes) free public RPC — CORS-friendly, no API key, no rate cap surprises.
+// Ankr started requiring API keys in 2025. For production-grade reliability,
+// set NEXT_PUBLIC_SOLANA_RPC_URL to Helius/QuickNode.
+export const SOLANA_RPC_URL = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://solana-rpc.publicnode.com";
 
 // Beta Flag - while true, all payments are bypassed (free for testing)
 export const BETA_FREE = true;
