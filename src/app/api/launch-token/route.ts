@@ -1,14 +1,15 @@
-// Real PumpFun token launch via pumpportal.fun /api/trade-local
-// Returns a partially-signed transaction (mint keypair signed server-side)
-// Client adds wallet signature and broadcasts to Solana.
+// Real PumpFun token launch via pumpportal.fun /api/trade-local.
+// Flow: upload metadata (with image) to pump.fun/api/ipfs → get URI → use in trade-local.
 
 import { NextRequest, NextResponse } from "next/server";
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
 import bs58 from "bs58";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://orthrus-theta.vercel.app";
+
 export async function POST(request: NextRequest) {
   try {
-    const { name, symbol, description, creatorWallet, personas, image } = await request.json();
+    const { name, symbol, description, creatorWallet, personas, imageUrl, twitter, telegram, website } = await request.json();
 
     if (!name || !symbol) {
       return NextResponse.json({ error: "Token name and symbol required" }, { status: 400 });
@@ -17,32 +18,72 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Creator wallet required" }, { status: 400 });
     }
 
-    // Persona description
     const personaDesc = personas?.map((p: any) => `${p.name} (${p.weight}%)`).join(" x ") || "";
     const fullDescription = description || `${name} ($${symbol}) - An Orthrus fusion of ${personaDesc}. Forged on orthrus.fun`;
 
-    // Generate a new mint keypair for this token
+    // 1. Fetch an image to attach (default to Orthrus logo)
+    const imgSource = imageUrl || `${APP_URL}/logo.png`;
+    let imageBlob: Blob | null = null;
+    try {
+      const imgRes = await fetch(imgSource);
+      if (imgRes.ok) imageBlob = await imgRes.blob();
+    } catch (e) { console.log("[launch-token] failed to fetch image:", e); }
+
+    if (!imageBlob) {
+      return NextResponse.json({ error: "Failed to prepare token image. Try again." }, { status: 500 });
+    }
+
+    // 2. Upload metadata + image to pump.fun's IPFS
+    const metaForm = new FormData();
+    metaForm.append("file", imageBlob, "token.png");
+    metaForm.append("name", name.slice(0, 32));
+    metaForm.append("symbol", symbol.slice(0, 10));
+    metaForm.append("description", fullDescription.slice(0, 500));
+    metaForm.append("twitter", twitter || "");
+    metaForm.append("telegram", telegram || "");
+    metaForm.append("website", website || "https://orthrus-theta.vercel.app");
+    metaForm.append("showName", "true");
+
+    const ipfsRes = await fetch("https://pump.fun/api/ipfs", {
+      method: "POST",
+      body: metaForm,
+    });
+
+    if (!ipfsRes.ok) {
+      const errTxt = await ipfsRes.text();
+      console.error("[launch-token] pump.fun IPFS error:", ipfsRes.status, errTxt);
+      return NextResponse.json(
+        { error: `Metadata upload failed (${ipfsRes.status}). ${errTxt.slice(0, 150)}` },
+        { status: 502 }
+      );
+    }
+    const ipfsData = await ipfsRes.json();
+    const metadataUri = ipfsData.metadataUri || ipfsData.metadata_uri || ipfsData.uri;
+
+    if (!metadataUri) {
+      console.error("[launch-token] No metadataUri in IPFS response:", ipfsData);
+      return NextResponse.json({ error: "Metadata upload returned no URI" }, { status: 502 });
+    }
+
+    // 3. Generate mint keypair for the token
     const mintKeypair = Keypair.generate();
 
-    // Call pumpportal to build the launch transaction
-    const pumpPayload: any = {
+    // 4. Call pumpportal to build the launch transaction
+    const pumpPayload = {
       publicKey: creatorWallet,
       action: "create",
       tokenMetadata: {
         name: name.slice(0, 32),
         symbol: symbol.slice(0, 10),
-        description: fullDescription.slice(0, 500),
+        uri: metadataUri,
       },
       mint: bs58.encode(mintKeypair.secretKey),
       denominatedInSol: "true",
-      amount: 0, // initial dev buy amount in SOL (0 = just create, no buy)
+      amount: 0, // 0 = just create, no initial dev buy
       slippage: 10,
       priorityFee: 0.0005,
       pool: "pump",
     };
-
-    // NOTE: Pumpportal has no referral program. User keeps 100% of any
-    // pump.fun creator fees. Orthrus revenue = forge fee + plan subscriptions.
 
     const response = await fetch("https://pumpportal.fun/api/trade-local", {
       method: "POST",
@@ -54,25 +95,19 @@ export async function POST(request: NextRequest) {
       const errTxt = await response.text();
       console.error("[launch-token] Pumpportal error:", response.status, errTxt);
       return NextResponse.json(
-        {
-          error: `PumpFun service returned ${response.status}. ${errTxt.slice(0, 200)}`,
-          status: response.status,
-        },
+        { error: `Pumpportal returned ${response.status}. ${errTxt.slice(0, 200)}` },
         { status: 502 }
       );
     }
 
-    // Pumpportal returns raw transaction bytes
     const txBytes = new Uint8Array(await response.arrayBuffer());
     if (txBytes.length === 0) {
-      return NextResponse.json({ error: "Empty transaction from PumpFun" }, { status: 502 });
+      return NextResponse.json({ error: "Empty transaction from Pumpportal" }, { status: 502 });
     }
 
-    // Deserialize + sign with mint keypair
     const tx = VersionedTransaction.deserialize(txBytes);
     tx.sign([mintKeypair]);
 
-    // Serialize the partially-signed tx (base64) for client
     const partialTxB64 = Buffer.from(tx.serialize()).toString("base64");
 
     return NextResponse.json({
@@ -80,6 +115,7 @@ export async function POST(request: NextRequest) {
       tokenAddress: mintKeypair.publicKey.toBase58(),
       pumpfunUrl: `https://pump.fun/coin/${mintKeypair.publicKey.toBase58()}`,
       partialTx: partialTxB64,
+      metadataUri,
       method: "pumpportal-local",
       metadata: { name, symbol, description: fullDescription, personas: personaDesc },
     });
