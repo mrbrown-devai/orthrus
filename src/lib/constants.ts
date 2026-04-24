@@ -6,7 +6,7 @@ export const SOLANA_RPC_URL = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https:/
 export const BETA_FREE = true;
 
 // Payment Configuration
-export const TREASURY_ADDRESS = "53tyNpNDS8yQQY58RBG8xVULJk2GMK4Vra6XzpETpvGR";
+export const TREASURY_ADDRESS = "BLUkZhZu7reiTQQe9HTDChJgz5LkBZqN8pr1htUPkaMs";
 export const FORGE_FEE_USDT = 10;   // One-time fee to forge an Orthrus
 export const FORGE_FEE_SOL = 0.12;  // SOL equivalent (~$10 at $85/SOL)
 
