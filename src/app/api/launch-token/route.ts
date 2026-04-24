@@ -5,7 +5,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
 import bs58 from "bs58";
-import { PUMP_FUN_REFERRAL_WALLET } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,10 +41,8 @@ export async function POST(request: NextRequest) {
       pool: "pump",
     };
 
-    // Include referral wallet if set (pumpportal may honor this)
-    if (PUMP_FUN_REFERRAL_WALLET) {
-      pumpPayload.referralAddress = PUMP_FUN_REFERRAL_WALLET;
-    }
+    // NOTE: Pumpportal has no referral program. User keeps 100% of any
+    // pump.fun creator fees. Orthrus revenue = forge fee + plan subscriptions.
 
     const response = await fetch("https://pumpportal.fun/api/trade-local", {
       method: "POST",
