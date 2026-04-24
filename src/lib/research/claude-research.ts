@@ -118,7 +118,7 @@ export async function researchPersonaWithClaude(
 
   const client = createAnthropicClient();
   const response = await client.messages.create({
-    model: "claude-sonnet-4-5",
+    model: "claude-haiku-4-5", // Haiku works within Claude Max rate limits
     max_tokens: 8000,
     tools: [
       {

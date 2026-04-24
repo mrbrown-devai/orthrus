@@ -123,7 +123,7 @@ Return ONLY this JSON (no preamble, no markdown):
 Be specific and creative. This fusion should feel like a third distinct character, not persona-A-with-persona-B-sprinkled-in.`;
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-5",
+    model: "claude-haiku-4-5",
     max_tokens: 2000,
     messages: [{ role: "user", content: prompt }],
   });
