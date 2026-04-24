@@ -553,8 +553,9 @@ export default function CreatePage() {
             </div>
           </div>
 
-          <button onClick={handleDeploy} disabled={!agentName} style={agentName ? BTN_NEON : BTN_DISABLED}>
-            🐕 UNLEASH ORTHRUS
+          <button onClick={handleDeploy} disabled={!agentName} style={agentName ? { ...BTN_NEON, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 } : { ...BTN_DISABLED, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <img src="/mint-icon.png" alt="" style={{ width: 22, height: 22 }} />
+            UNLEASH ORTHRUS
           </button>
         </div>
       )}

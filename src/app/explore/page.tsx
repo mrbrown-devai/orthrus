@@ -31,7 +31,7 @@ export default function ExplorePage() {
 
       {beasts.length === 0 && (
         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(0,245,255,0.1)", borderRadius: 20, padding: 60, textAlign: "center" }}>
-          <div style={{ fontSize: 64, marginBottom: 24, opacity: 0.4 }}>🐕</div>
+          <img src="/mint-icon.png" alt="Orthrus" style={{ width: 80, height: 80, marginBottom: 24, opacity: 0.6, filter: "drop-shadow(0 0 16px rgba(0,245,255,0.3))" }} />
           <h2 style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 22, color: "#fff", marginBottom: 8, letterSpacing: 2 }}>NO BEASTS YET</h2>
           <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 32, maxWidth: 400, margin: "0 auto 32px" }}>Be the first to forge an Orthrus on the platform</p>
           <Link href="/create">

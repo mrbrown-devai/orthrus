@@ -10,7 +10,7 @@ export default function DashboardPage() {
   return <Suspense fallback={<DashboardLoading />}><DashboardContent /></Suspense>;
 }
 function DashboardLoading() {
-  return <div style={{ maxWidth: 1000, margin: "0 auto", padding: "32px 24px", textAlign: "center" }}><div style={{ fontSize: 40, marginBottom: 16 }}>🐕</div><p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Loading...</p></div>;
+  return <div style={{ maxWidth: 1000, margin: "0 auto", padding: "32px 24px", textAlign: "center" }}><img src="/mint-icon.png" alt="Orthrus" style={{ width: 48, height: 48, marginBottom: 16, filter: "drop-shadow(0 0 12px rgba(0,245,255,0.4))" }} /><p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Loading...</p></div>;
 }
 function DashboardContent() {
   const { agents, currentAgentId, setCurrentAgent, updateAgent, updateAgentPersonaWeight } = useChimeraStore();
@@ -37,7 +37,7 @@ function DashboardContent() {
   if (agents.length === 0) {
     return (
       <div style={{ maxWidth: 800, margin: "0 auto", padding: "80px 24px", textAlign: "center" }}>
-        <div style={{ fontSize: 64, marginBottom: 24 }}>🐕</div>
+        <img src="/mint-icon.png" alt="Orthrus" style={{ width: 80, height: 80, marginBottom: 24, filter: "drop-shadow(0 0 20px rgba(0,245,255,0.4)) drop-shadow(0 0 40px rgba(255,0,225,0.3))" }} />
         <h2 style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 28, color: "#fff", marginBottom: 12, letterSpacing: 3 }}>NO ORTHRUS YET</h2>
         <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 32 }}>Forge your first beast by fusing two icons.</p>
         <Link href="/create" style={{ display: "inline-block", background: "linear-gradient(135deg, #00F5FF, #9945FF, #FF00E1)", color: "#000", fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 14, letterSpacing: 2, padding: "14px 32px", borderRadius: 12, textDecoration: "none", boxShadow: "0 0 30px rgba(0,245,255,0.3)" }}>+ FORGE ORTHRUS</Link>
