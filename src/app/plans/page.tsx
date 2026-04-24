@@ -122,7 +122,7 @@ export default function PlansPage() {
 
       <div style={{ marginTop: 40, textAlign: "center" }}>
         <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.8 }}>
-          All plans: Claude AI persona engine \u2022 PumpFun integration \u2022 Community voting \u2022 Marketplace access<br />
+          All plans: AI persona engine \u2022 PumpFun integration \u2022 Community voting \u2022 Marketplace access<br />
           Cancel anytime. Pay-as-you-go in SOL or USDT.
         </p>
       </div>

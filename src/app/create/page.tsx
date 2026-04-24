@@ -143,7 +143,7 @@ export default function CreatePage() {
       {step === 1 && !analyzing && (
         <div>
           <h2 style={H2}>Choose Two Icons</h2>
-          <p style={SUB}>Enter two personalities to fuse. Claude AI will absorb their essence from the web.</p>
+          <p style={SUB}>Enter two personalities to fuse. Our AI will absorb their essence from the web.</p>
           {error && <ErrorBox message={error} />}
 
           <div style={{ background: "rgba(0,245,255,0.03)", border: "1px solid rgba(0,245,255,0.2)", borderRadius: 16, padding: 24, marginBottom: 20, boxShadow: "0 0 20px rgba(0,245,255,0.05)" }}>

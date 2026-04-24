@@ -169,7 +169,7 @@ export default function Home() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 20 }}>
             {[
               { num: "01", title: "Pick 2 Icons", desc: "Select two personalities to fuse into one beast." },
-              { num: "02", title: "AI Fuses", desc: "Claude absorbs web data + merges the minds." },
+              { num: "02", title: "AI Fuses", desc: "Our AI absorbs web data + merges the minds." },
               { num: "03", title: "Pay 1 SOL", desc: "Connect Phantom + pay to forge your Orthrus." },
               { num: "04", title: "Launch Coin", desc: "Deploy its memecoin on PumpFun in one click." },
               { num: "05", title: "Unleash on X", desc: "Link your X account — the beast starts posting." },
@@ -190,7 +190,7 @@ export default function Home() {
 
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center" }}>
             {[
-              { icon: "🧠", name: "Claude AI", desc: "Persona research" },
+              { icon: "🧠", name: "AI Fusion", desc: "Persona research" },
               { icon: <SolanaLogo size={28} />, name: "Solana", desc: "Blockchain layer" },
               { icon: "🚀", name: "PumpFun", desc: "Token launches" },
               { icon: "𝕏", name: "X Posting", desc: "Autonomous shitposting" },
@@ -210,7 +210,7 @@ export default function Home() {
           <div style={{ width: "min(400px, 80vw)", margin: "0 auto 20px", opacity: 0.4 }}>
             <MeanderBorder color="#9945FF" />
           </div>
-          <p>ORTHRUS — Two Heads. One Chaos. | Built on Solana | Powered by Claude AI</p>
+          <p>ORTHRUS — Two Heads. One Chaos. | Built on Solana</p>
         </footer>
       </div>
     </div>
