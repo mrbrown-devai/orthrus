@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useChimeraStore, ChimeraAgent } from "@/lib/store";
+import { XComplianceModal } from "@/components/XComplianceModal";
 
 export default function DashboardPage() {
   return <Suspense fallback={<DashboardLoading />}><DashboardContent /></Suspense>;
@@ -15,6 +16,7 @@ function DashboardContent() {
   const { agents, currentAgentId, setCurrentAgent, updateAgent, updateAgentPersonaWeight } = useChimeraStore();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<"overview" | "autopilot" | "settings" | "posts">("overview");
+  const [showXCompliance, setShowXCompliance] = useState(false);
 
   useEffect(() => {
     const twitterConnected = searchParams.get("twitter_connected");
@@ -103,7 +105,7 @@ function DashboardContent() {
               <div style={{ marginBottom: 20 }}>
                 <PlatformCard platform="X (Twitter)" icon="𝕏" connected={currentAgent.xConnected} handle={currentAgent.xHandle}
                   url={currentAgent.xProfileUrl}
-                  onConnect={() => { window.location.href = `/api/auth/twitter?agentId=${currentAgent.id}`; }} />
+                  onConnect={() => setShowXCompliance(true)} />
               </div>
 
               {/* Memecoin */}
@@ -162,6 +164,18 @@ function DashboardContent() {
             </div>
           )}
         </>
+      )}
+
+      {/* X compliance modal */}
+      {showXCompliance && currentAgent && (
+        <XComplianceModal
+          agentId={currentAgent.id}
+          onCancel={() => setShowXCompliance(false)}
+          onConfirm={() => {
+            setShowXCompliance(false);
+            window.location.href = `/api/auth/twitter?agentId=${currentAgent.id}`;
+          }}
+        />
       )}
     </div>
   );

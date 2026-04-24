@@ -32,26 +32,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get tokens from cookie
-    const cookieStore = await cookies();
-    const tokenCookie = cookieStore.get(`twitter_tokens_${agentId}`);
+    // Get tokens — KV first (works from any context), then cookie fallback
+    const { loadTwitterTokens, saveTwitterTokens } = await import("@/lib/twitter-tokens");
+    const tokens = await loadTwitterTokens(agentId);
 
-    if (!tokenCookie) {
+    if (!tokens) {
       return NextResponse.json(
         { error: "Twitter not connected for this agent" },
         { status: 401 }
       );
     }
 
-    let tokenData: TokenData;
-    try {
-      tokenData = JSON.parse(tokenCookie.value);
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid token data" },
-        { status: 401 }
-      );
-    }
+    const tokenData: TokenData = {
+      agentId: tokens.agentId,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresAt: tokens.expiresAt,
+      userId: tokens.userId,
+      username: tokens.username,
+    };
 
     // Check if token is expired and refresh if needed
     let accessToken = tokenData.accessToken;
@@ -65,20 +64,15 @@ export async function POST(request: NextRequest) {
         
         accessToken = newTokens.access_token;
         
-        // Update stored tokens
-        const updatedTokenData = {
-          ...tokenData,
+        // Update stored tokens (both cookie + KV)
+        await saveTwitterTokens({
+          agentId: tokenData.agentId,
           accessToken: newTokens.access_token,
           refreshToken: newTokens.refresh_token || tokenData.refreshToken,
           expiresAt: Date.now() + newTokens.expires_in * 1000,
-        };
-        
-        cookieStore.set(`twitter_tokens_${agentId}`, JSON.stringify(updatedTokenData), {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 60 * 60 * 24 * 30,
-          path: "/",
+          userId: tokenData.userId,
+          username: tokenData.username,
+          connectedAt: Date.now(),
         });
       } catch (refreshError) {
         console.error("Token refresh failed:", refreshError);

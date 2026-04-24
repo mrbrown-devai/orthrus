@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { exchangeCodeForTokens, getTwitterUser, type TwitterAuthState } from "@/lib/twitter";
+import { saveTwitterTokens } from "@/lib/twitter-tokens";
 
 const TWITTER_CLIENT_ID = process.env.TWITTER_CLIENT_ID!;
 const TWITTER_CLIENT_SECRET = process.env.TWITTER_CLIENT_SECRET!;
@@ -82,13 +83,15 @@ export async function GET(request: NextRequest) {
       profileImageUrl: user.profile_image_url,
     };
 
-    // Store in cookie (limited to 4KB, so for production use a DB)
-    cookieStore.set(`twitter_tokens_${authState.agentId}`, JSON.stringify(tokenData), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      path: "/",
+    // Persist tokens to BOTH cookie (session) AND KV (cron access)
+    await saveTwitterTokens({
+      agentId: authState.agentId,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      expiresAt: Date.now() + tokens.expires_in * 1000,
+      userId: user.id,
+      username: user.username,
+      connectedAt: Date.now(),
     });
 
     // Redirect back to dashboard with success
