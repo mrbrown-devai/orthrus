@@ -15,21 +15,14 @@ export function createAnthropicClient() {
     throw new Error("ANTHROPIC_API_KEY is not set");
   }
 
-  // OAuth tokens (Claude Max subscription) use the Authorization: Bearer header
-  if (key.startsWith("sk-ant-oat")) {
-    return new Anthropic({
-      authToken: key,
-      defaultHeaders: {
-        "anthropic-beta": BETA_HEADERS,
-      },
-    });
-  }
-
-  // Standard API key (sk-ant-api03-*)
+  // OAuth tokens (Claude Max) AND standard API keys both work via x-api-key.
+  // The SDK always sends x-api-key, so if we use authToken only, x-api-key goes as empty → 401.
+  // Fix: pass the token as apiKey. Verified: sk-ant-oat01-* works with x-api-key header.
+  const isOAuth = key.startsWith("sk-ant-oat");
   return new Anthropic({
     apiKey: key,
     defaultHeaders: {
-      "anthropic-beta": "web-search-2025-03-05",
+      "anthropic-beta": isOAuth ? BETA_HEADERS : "web-search-2025-03-05",
     },
   });
 }
