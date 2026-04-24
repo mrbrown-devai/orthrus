@@ -313,12 +313,72 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
   const [balance, setBalance] = useState<{ sol: number; tokens: any[] } | null>(null);
   const [running, setRunning] = useState(false);
   const [lastResult, setLastResult] = useState<any>(null);
+  const [xAutopilotStatus, setXAutopilotStatus] = useState<any>(null);
+  const [xToggling, setXToggling] = useState(false);
   const mode = agent.autopilotMode || "manual";
   const interval = agent.autopilotInterval || 4;
   const actions = agent.autopilotActions || [];
   const { addAutopilotAction } = useChimeraStore();
 
   const traits = agent.personas.flatMap(p => p.analysis?.traits || []);
+
+  const fetchXStatus = async () => {
+    try {
+      const res = await fetch(`/api/autopilot-status?agentId=${agent.id}`);
+      const d = await res.json();
+      setXAutopilotStatus(d);
+    } catch {}
+  };
+
+  const toggleXAutopilot = async (enable: boolean) => {
+    setXToggling(true);
+    try {
+      if (enable) {
+        const res = await fetch("/api/autopilot-register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            agentId: agent.id,
+            name: agent.name,
+            plan: agent.plan || "free",
+            personas: agent.personas,
+            fusion: agent.fusion,
+            enabled: true,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          alert(err.error || "Failed to enable autopilot");
+          return;
+        }
+      } else {
+        await fetch(`/api/autopilot-register?agentId=${agent.id}`, { method: "DELETE" });
+      }
+      await fetchXStatus();
+    } catch (e: any) {
+      alert("Autopilot toggle failed: " + (e?.message || "unknown"));
+    } finally { setXToggling(false); }
+  };
+
+  const pauseFor24h = async () => {
+    const pauseUntil = Date.now() + 24 * 60 * 60 * 1000;
+    await fetch("/api/autopilot-register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        agentId: agent.id,
+        name: agent.name,
+        plan: agent.plan || "free",
+        personas: agent.personas,
+        fusion: agent.fusion,
+        enabled: true,
+        pauseUntil,
+      }),
+    });
+    await fetchXStatus();
+  };
+
+  useEffect(() => { fetchXStatus(); }, [agent.id]);
 
   const fetchBalance = async () => {
     try {
@@ -361,8 +421,103 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
     } finally { setRunning(false); }
   };
 
+  const xp = xAutopilotStatus;
+  const planLabel: Record<string, string> = { free: "FREE", degen: "DEGEN", alpha: "ALPHA", whale: "WHALE" };
+  const freeTier = (agent.plan || "free") === "free";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* X Autopilot — the main feature users care about */}
+      <div style={{ background: "linear-gradient(135deg, rgba(0,245,255,0.05), rgba(255,0,225,0.05))", border: "1px solid rgba(153,69,255,0.3)", borderRadius: 16, padding: 24, boxShadow: "0 0 30px rgba(0,245,255,0.08)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div>
+            <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 14, background: "linear-gradient(90deg, #00F5FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: 3, textTransform: "uppercase" }}>𝕏 Posting Autopilot</div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 4 }}>Bot posts to your connected X account on schedule</div>
+          </div>
+          {xp?.enabled && !xp?.paused && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 20, background: "rgba(0,255,163,0.15)", border: "1px solid rgba(0,255,163,0.4)" }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00FFA3", animation: "pulse 2s infinite" }} />
+              <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 10, color: "#00FFA3", letterSpacing: 2, fontWeight: 700 }}>ACTIVE</span>
+            </div>
+          )}
+          {xp?.paused && (
+            <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 10, color: "#FFA500", padding: "6px 12px", background: "rgba(255,165,0,0.1)", border: "1px solid rgba(255,165,0,0.3)", borderRadius: 20, letterSpacing: 2, fontWeight: 700 }}>⏸ PAUSED</span>
+          )}
+        </div>
+
+        {!xp?.kvConfigured && (
+          <div style={{ padding: 12, background: "rgba(255,165,0,0.1)", border: "1px solid rgba(255,165,0,0.3)", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#FFA500", marginBottom: 16 }}>
+            ⚠ Server storage not configured. Autopilot requires Upstash Redis env vars.
+          </div>
+        )}
+
+        {!xp?.xConnected && xp?.kvConfigured && (
+          <div style={{ padding: 12, background: "rgba(255,0,225,0.08)", border: "1px solid rgba(255,0,225,0.2)", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#FF00E1", marginBottom: 16 }}>
+            Connect your X account (Overview tab) before enabling autopilot.
+          </div>
+        )}
+
+        {freeTier && (
+          <div style={{ padding: 12, background: "rgba(153,69,255,0.08)", border: "1px solid rgba(153,69,255,0.2)", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#9945FF", marginBottom: 16 }}>
+            Free tier doesn&apos;t include autopilot. Upgrade to Degen / Alpha / Whale on the Plans page.
+          </div>
+        )}
+
+        {/* Stats grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12, marginBottom: 20 }}>
+          <div style={{ padding: 12, background: "rgba(0,0,0,0.25)", borderRadius: 8 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: 1, textTransform: "uppercase" }}>Plan</div>
+            <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 16, color: "#fff", fontWeight: 700, marginTop: 4 }}>{planLabel[agent.plan || "free"]}</div>
+          </div>
+          <div style={{ padding: 12, background: "rgba(0,0,0,0.25)", borderRadius: 8 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: 1, textTransform: "uppercase" }}>Daily Limit</div>
+            <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 16, color: "#00F5FF", fontWeight: 700, marginTop: 4 }}>{xp?.dailyLimit ?? "—"}</div>
+          </div>
+          <div style={{ padding: 12, background: "rgba(0,0,0,0.25)", borderRadius: 8 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: 1, textTransform: "uppercase" }}>Posts Today</div>
+            <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 16, color: "#FF00E1", fontWeight: 700, marginTop: 4 }}>{xp?.postsToday ?? 0}</div>
+          </div>
+          <div style={{ padding: 12, background: "rgba(0,0,0,0.25)", borderRadius: 8 }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: 1, textTransform: "uppercase" }}>Remaining</div>
+            <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 16, color: "#00FFA3", fontWeight: 700, marginTop: 4 }}>{xp?.remaining ?? 0}</div>
+          </div>
+        </div>
+
+        {/* Toggle + Pause buttons */}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            onClick={() => toggleXAutopilot(!xp?.enabled)}
+            disabled={xToggling || freeTier || !xp?.xConnected || !xp?.kvConfigured}
+            style={{
+              flex: 1, padding: 14, borderRadius: 10,
+              cursor: (xToggling || freeTier || !xp?.xConnected || !xp?.kvConfigured) ? "not-allowed" : "pointer",
+              background: xp?.enabled ? "rgba(255,0,225,0.15)" : "linear-gradient(135deg, #00F5FF, #9945FF, #FF00E1)",
+              border: xp?.enabled ? "1px solid rgba(255,0,225,0.4)" : "none",
+              color: xp?.enabled ? "#FF00E1" : "#000",
+              fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 13, letterSpacing: 2, textTransform: "uppercase",
+              opacity: (freeTier || !xp?.xConnected || !xp?.kvConfigured) ? 0.4 : 1,
+            }}
+          >
+            {xToggling ? "..." : xp?.enabled ? "Disable Autopilot" : "Enable Autopilot"}
+          </button>
+          {xp?.enabled && !xp?.paused && (
+            <button onClick={pauseFor24h} style={{
+              padding: "14px 20px", borderRadius: 10, cursor: "pointer",
+              background: "rgba(255,165,0,0.1)", border: "1px solid rgba(255,165,0,0.3)",
+              color: "#FFA500", fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, letterSpacing: 1.5,
+            }}>⏸ PAUSE 24H</button>
+          )}
+        </div>
+
+        {/* Footer info */}
+        <div style={{ marginTop: 14, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", lineHeight: 1.7 }}>
+          {xp?.nextCronAt && <>⏱ Next batch: {new Date(xp.nextCronAt).toLocaleString()}<br /></>}
+          {xp?.paused && xp?.pausedUntil && <>⏸ Paused until: {new Date(xp.pausedUntil).toLocaleString()}<br /></>}
+          Posts spaced ~2 min apart. Auto-pauses on rate limits or auth errors.
+        </div>
+        <style jsx>{`@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+      </div>
+
       {/* Wallet Balance */}
       <div style={{ background: "rgba(0,255,163,0.04)", border: "1px solid rgba(0,255,163,0.2)", borderRadius: 16, padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
