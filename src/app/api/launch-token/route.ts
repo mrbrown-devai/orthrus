@@ -3,7 +3,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
-import bs58 from "bs58";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://orthrus-theta.vercel.app";
 
@@ -69,6 +68,8 @@ export async function POST(request: NextRequest) {
     const mintKeypair = Keypair.generate();
 
     // 4. Call pumpportal to build the launch transaction
+    // CRITICAL: `mint` field must be the PUBLIC KEY (base58), not the secret key.
+    // Pumpportal uses it to reserve the mint address; we sign with the secret locally below.
     const pumpPayload = {
       publicKey: creatorWallet,
       action: "create",
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
         symbol: symbol.slice(0, 10),
         uri: metadataUri,
       },
-      mint: bs58.encode(mintKeypair.secretKey),
+      mint: mintKeypair.publicKey.toBase58(),
       denominatedInSol: "true",
       amount: 0, // 0 = just create, no initial dev buy
       slippage: 10,
