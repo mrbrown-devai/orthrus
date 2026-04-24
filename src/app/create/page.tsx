@@ -208,6 +208,29 @@ export default function CreatePage() {
             </div>
           </div>
 
+          {/* What the AI will do — sets expectations */}
+          <div style={{ background: "linear-gradient(135deg, rgba(0,245,255,0.04), rgba(255,0,225,0.04))", border: "1px solid rgba(153,69,255,0.25)", borderRadius: 14, padding: 20, marginBottom: 20 }}>
+            <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 11, background: "linear-gradient(90deg, #00F5FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: 3, marginBottom: 14 }}>🧬 WHAT HAPPENS NEXT</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+              {[
+                { icon: "🔍", label: "Web Search", desc: "Claude scans dozens of sources" },
+                { icon: "📺", label: "YouTube", desc: "Top 3 interviews + transcripts" },
+                { icon: "𝕏", label: "X Timeline", desc: "Voice patterns, catchphrases" },
+                { icon: "🧠", label: "Psychology", desc: "7-dimension deep profile" },
+                { icon: "🧬", label: "Fusion DNA", desc: "Creative tension + synthesis" },
+              ].map((phase, i) => (
+                <div key={i} style={{ padding: 10, background: "rgba(0,0,0,0.3)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div style={{ fontSize: 20, marginBottom: 6 }}>{phase.icon}</div>
+                  <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#fff", letterSpacing: 1, marginBottom: 3 }}>{phase.label}</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.5)", lineHeight: 1.4 }}>{phase.desc}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 14, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", textAlign: "center" }}>
+              ⏱ Takes ~2-5 min for deep analysis
+            </div>
+          </div>
+
           <button onClick={startAnalysis} disabled={!personaA.name || !personaB.name} style={(personaA.name && personaB.name) ? BTN_NEON : BTN_DISABLED}>
             🧬 ABSORB & FUSE
           </button>
