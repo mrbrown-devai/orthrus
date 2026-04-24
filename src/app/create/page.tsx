@@ -50,28 +50,63 @@ export default function CreatePage() {
   const [generatedWallet, setGeneratedWallet] = useState<{ address: string; privateKey: string } | null>(null);
   const [agentId] = useState(() => `orthrus_${Date.now()}`);
 
-  const analyzePersona = async (persona: PersonaInput): Promise<PersonaAnalysis> => {
-    const res = await fetch("/api/analyze", {
+  const [fusionDynamics, setFusionDynamics] = useState<any>(null);
+
+  const analyzePersonaDeep = async (persona: PersonaInput): Promise<PersonaAnalysis> => {
+    const res = await fetch("/api/research", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(persona),
+      body: JSON.stringify({
+        name: persona.name,
+        xHandle: persona.xHandle,
+        webLink: persona.webLink,
+        depth: "deep",
+      }),
     });
     const data = await res.json();
-    if (!res.ok || !data.analysis) throw new Error(data.error || "Analysis failed");
+    if (!res.ok || !data.analysis) throw new Error(data.error || "Research failed");
     return data.analysis;
   };
 
   const startAnalysis = async () => {
-    setAnalyzing(true); setAnalyzeProgress(0); setError(null);
+    setAnalyzing(true); setAnalyzeProgress(0); setError(null); setFusionDynamics(null);
     try {
-      setAnalyzePhase(`Absorbing ${personaA.name}...`); setAnalyzeProgress(15);
-      const resultA = await analyzePersona(personaA); setAnalysisA(resultA); setAnalyzeProgress(45);
-      setAnalyzePhase(`Absorbing ${personaB.name}...`);
-      const resultB = await analyzePersona(personaB); setAnalysisB(resultB); setAnalyzeProgress(80);
-      setAnalyzePhase("Fusing heads..."); setAnalyzeProgress(95);
-      await new Promise(r => setTimeout(r, 500));
-      setAnalyzePhase("Orthrus awakens ✓"); setAnalyzeProgress(100);
-      setTimeout(() => { setAnalyzing(false); setStep(2); }, 500);
+      setAnalyzePhase(`🔍 Searching web for ${personaA.name}...`); setAnalyzeProgress(8);
+      // Run both persona analyses in parallel for speed
+      const phasesA = ["🔍 Web search", "📺 YouTube interviews", "𝕏 X timeline", "🧠 Psychological model"];
+      const phasesB = phasesA.map(p => p.replace("🔍", "🔍"));
+      let phaseIdx = 0;
+      const phaseInterval = setInterval(() => {
+        if (phaseIdx < phasesA.length - 1) {
+          phaseIdx++;
+          setAnalyzePhase(`${phasesA[phaseIdx]} on both icons...`);
+          setAnalyzeProgress(15 + phaseIdx * 15);
+        }
+      }, 4000);
+
+      const [resultA, resultB] = await Promise.all([
+        analyzePersonaDeep(personaA),
+        analyzePersonaDeep(personaB),
+      ]);
+      clearInterval(phaseInterval);
+
+      setAnalysisA(resultA); setAnalysisB(resultB); setAnalyzeProgress(80);
+      setAnalyzePhase("🧬 Synthesizing fusion dynamics...");
+
+      // Generate fusion dynamics
+      try {
+        const fusionRes = await fetch("/api/fuse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ personaA: resultA, personaB: resultB, weightA: weight }),
+        });
+        const fusionData = await fusionRes.json();
+        if (fusionData.success) setFusionDynamics(fusionData.fusion);
+      } catch (e) { console.log("Fusion dynamics failed (non-fatal):", e); }
+
+      setAnalyzeProgress(100);
+      setAnalyzePhase("🐕 Orthrus awakens");
+      setTimeout(() => { setAnalyzing(false); setStep(2); }, 600);
     } catch (err: any) {
       setError(err.message || "Analysis failed."); setAnalyzing(false);
     }
@@ -124,6 +159,7 @@ export default function CreatePage() {
       plan: "free",
       forgePaymentTx: paymentSignature || undefined,
       forgePaymentCurrency: paymentCurrency || undefined,
+      fusion: fusionDynamics || undefined,
       activePlatforms: ["x"] as any,
       recentPosts: [],
     };
@@ -196,6 +232,59 @@ export default function CreatePage() {
           <p style={SUB}>Review what we absorbed. Adjust the blend between the two heads.</p>
           {analysisA && <AnalysisCard name={personaA.name} analysis={analysisA} color="#00F5FF" />}
           {analysisB && <AnalysisCard name={personaB.name} analysis={analysisB} color="#FF00E1" />}
+
+          {/* FUSION DYNAMICS — the secret sauce showing WHY this combo is interesting */}
+          {fusionDynamics && (
+            <div style={{ background: "linear-gradient(135deg, rgba(0,245,255,0.06), rgba(255,0,225,0.06))", border: "1px solid rgba(153,69,255,0.3)", borderRadius: 16, padding: 24, marginBottom: 20, boxShadow: "0 0 30px rgba(153,69,255,0.15)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 18, background: "linear-gradient(90deg, #00F5FF, #9945FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: 2 }}>🧬 FUSION DYNAMICS</div>
+              </div>
+
+              {fusionDynamics.creativeTension && (
+                <div style={{ marginBottom: 16, padding: 14, background: "rgba(153,69,255,0.08)", borderRadius: 10, border: "1px solid rgba(153,69,255,0.2)" }}>
+                  <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 10, color: "#9945FF", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>⚡ Creative Tension</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 1.7 }}>{fusionDynamics.creativeTension}</div>
+                </div>
+              )}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                {fusionDynamics.commonGround && fusionDynamics.commonGround.length > 0 && (
+                  <div style={{ padding: 12, background: "rgba(0,255,163,0.06)", borderRadius: 8, border: "1px solid rgba(0,255,163,0.2)" }}>
+                    <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 9, color: "#00FFA3", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>🤝 Common Ground</div>
+                    <ul style={{ margin: 0, paddingLeft: 16, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.7)", lineHeight: 1.8 }}>
+                      {fusionDynamics.commonGround.slice(0, 4).map((c: string, i: number) => <li key={i}>{c}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {fusionDynamics.valueConflicts && fusionDynamics.valueConflicts.length > 0 && (
+                  <div style={{ padding: 12, background: "rgba(255,0,225,0.06)", borderRadius: 8, border: "1px solid rgba(255,0,225,0.2)" }}>
+                    <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 9, color: "#FF00E1", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>⚔️ Value Conflicts</div>
+                    <ul style={{ margin: 0, paddingLeft: 16, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.7)", lineHeight: 1.8 }}>
+                      {fusionDynamics.valueConflicts.slice(0, 4).map((c: string, i: number) => <li key={i}>{c}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {fusionDynamics.blendVoice && (
+                <div style={{ padding: 12, background: "rgba(0,245,255,0.05)", borderRadius: 8, border: "1px solid rgba(0,245,255,0.15)", marginBottom: 12 }}>
+                  <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 9, color: "#00F5FF", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>🗣️ Blend Voice</div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.7 }}>{fusionDynamics.blendVoice}</div>
+                </div>
+              )}
+
+              {fusionDynamics.sharedEnemies && fusionDynamics.sharedEnemies.length > 0 && (
+                <div>
+                  <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.5)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>🎯 Shared Enemies</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {fusionDynamics.sharedEnemies.map((e: string, i: number) => (
+                      <span key={i} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "4px 10px", borderRadius: 6, background: "rgba(255,0,225,0.1)", color: "#FF00E1", border: "1px solid rgba(255,0,225,0.25)" }}>{e}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(153,69,255,0.2)", borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: "0 0 20px rgba(153,69,255,0.05)" }}>
             <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 11, color: "rgba(255,255,255,0.5)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 16 }}>Blend Ratio</div>
@@ -352,14 +441,167 @@ function InputField({ label, value, onChange, placeholder }: { label: string; va
   return <div><label style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>{label}</label><input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 16px", color: "#fff", fontFamily: "'JetBrains Mono', monospace", fontSize: 13, outline: "none" }} /></div>;
 }
 function AnalysisCard({ name, analysis, color }: { name: string; analysis: PersonaAnalysis; color: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasDepth = !!(analysis.identity || analysis.voice || analysis.psychology);
+
+  const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div>
+      <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 10, color: "rgba(255,255,255,0.45)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
+      {children}
+    </div>
+  );
+  const Tag = ({ text }: { text: string }) => (
+    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "5px 10px", borderRadius: 6, background: `${color}15`, color, border: `1px solid ${color}30` }}>{text}</span>
+  );
+  const Text = ({ children }: { children: React.ReactNode }) => (
+    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "rgba(255,255,255,0.75)", lineHeight: 1.7 }}>{children}</div>
+  );
+  const Row = ({ k, v }: { k: string; v?: string }) => v ? (
+    <div style={{ display: "flex", gap: 8, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginBottom: 4 }}>
+      <span style={{ color: "rgba(255,255,255,0.4)", minWidth: 100 }}>{k}:</span>
+      <span style={{ color: "rgba(255,255,255,0.8)" }}>{v}</span>
+    </div>
+  ) : null;
+
   return (
     <div style={{ background: `${color}08`, border: `1px solid ${color}30`, borderRadius: 16, padding: 24, marginBottom: 20, boxShadow: `0 0 20px ${color}10` }}>
-      <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 20, color, marginBottom: 20, letterSpacing: 1 }}>{name}</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 20, color, letterSpacing: 1 }}>{name}</div>
+        {hasDepth && (
+          <button onClick={() => setExpanded(!expanded)} style={{ padding: "4px 12px", borderRadius: 6, cursor: "pointer", background: `${color}15`, border: `1px solid ${color}30`, color, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1 }}>
+            {expanded ? "− COLLAPSE" : "+ DEEP DIVE"}
+          </button>
+        )}
+      </div>
+
       <div style={{ display: "grid", gap: 20 }}>
-        <div><div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Who They Are</div><div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.7 }}>{analysis.description}</div></div>
-        <div><div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Traits</div><div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{analysis.traits.map(t => <span key={t} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "5px 12px", borderRadius: 8, background: `${color}15`, color, border: `1px solid ${color}30` }}>{t}</span>)}</div></div>
-        <div><div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Expression</div><div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.7 }}>{analysis.expression}</div></div>
-        <div style={{ background: `${color}10`, borderRadius: 10, padding: 16 }}><div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 10, color, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>🌟 North Star</div><div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 1.7 }}>{analysis.northStar}</div></div>
+        <Section label="Who They Are"><Text>{analysis.description}</Text></Section>
+
+        <Section label="Core Traits">
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {analysis.traits.map(t => <Tag key={t} text={t} />)}
+          </div>
+        </Section>
+
+        <Section label="Expression"><Text>{analysis.expression}</Text></Section>
+
+        <div style={{ background: `${color}10`, borderRadius: 10, padding: 16 }}>
+          <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 10, color, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>🌟 North Star</div>
+          <Text>{analysis.northStar}</Text>
+        </div>
+
+        {/* Deep-dive panel — only shown when expanded and data exists */}
+        {expanded && hasDepth && (
+          <div style={{ display: "grid", gap: 20, padding: 16, background: "rgba(0,0,0,0.25)", borderRadius: 12, border: `1px solid ${color}20` }}>
+
+            {analysis.identity && (
+              <Section label="🆔 Identity">
+                <Row k="Profession" v={analysis.identity.profession} />
+                <Row k="Generation" v={analysis.identity.ageOrGeneration} />
+                <Row k="Culture" v={analysis.identity.culturalBackground} />
+                <Row k="Political" v={analysis.identity.politicalLean} />
+                <Row k="Socioeconomic" v={analysis.identity.socioeconomic} />
+              </Section>
+            )}
+
+            {analysis.voice && (
+              <Section label="🗣️ Voice">
+                <Row k="Tone" v={analysis.voice.tone} />
+                <Row k="Vocabulary" v={analysis.voice.vocabulary} />
+                <Row k="Rhythm" v={analysis.voice.sentenceRhythm} />
+                <Row k="Emojis" v={analysis.voice.emojiUsage} />
+                <Row k="Caps" v={analysis.voice.capitalizationStyle} />
+                <Row k="Profanity" v={analysis.voice.profanityLevel} />
+                {analysis.voice.catchphrases && analysis.voice.catchphrases.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Catchphrases:</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {analysis.voice.catchphrases.map(c => <Tag key={c} text={`"${c}"`} />)}
+                    </div>
+                  </div>
+                )}
+              </Section>
+            )}
+
+            {analysis.psychology && (
+              <Section label="🧠 Psychology">
+                <Row k="Ego" v={analysis.psychology.egoPattern} />
+                <Row k="Humor" v={analysis.psychology.humorStyle} />
+                <Row k="Vulnerability" v={analysis.psychology.vulnerabilityLevel} />
+                {analysis.psychology.coreBeliefs && analysis.psychology.coreBeliefs.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Core beliefs:</div>
+                    <ul style={{ margin: 0, paddingLeft: 16, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.7)", lineHeight: 1.7 }}>
+                      {analysis.psychology.coreBeliefs.slice(0, 5).map((b, i) => <li key={i}>{b}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {analysis.psychology.fears && analysis.psychology.fears.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Fears/Triggers:</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {analysis.psychology.fears.map((f, i) => <Tag key={i} text={f} />)}
+                    </div>
+                  </div>
+                )}
+                {analysis.psychology.originStory && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Origin story:</div>
+                    <Text>{analysis.psychology.originStory}</Text>
+                  </div>
+                )}
+              </Section>
+            )}
+
+            {analysis.behavior && (
+              <Section label="📱 Behavior">
+                <Row k="Frequency" v={analysis.behavior.postingFrequency} />
+                <Row k="Engagement" v={analysis.behavior.engagementStyle} />
+                <Row k="Controversy" v={analysis.behavior.controversyAppetite} />
+                <Row k="Memes" v={analysis.behavior.memeFluency} />
+                <Row k="Apology" v={analysis.behavior.apologyPattern} />
+                {analysis.behavior.runningFeuds && analysis.behavior.runningFeuds.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Running feuds:</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {analysis.behavior.runningFeuds.slice(0, 6).map((f, i) => <Tag key={i} text={f} />)}
+                    </div>
+                  </div>
+                )}
+              </Section>
+            )}
+
+            {analysis.signature && (
+              <Section label="✨ Signature">
+                {analysis.signature.runningJokes && analysis.signature.runningJokes.length > 0 && (
+                  <div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Running jokes:</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                      {analysis.signature.runningJokes.slice(0, 5).map((j, i) => <Tag key={i} text={j} />)}
+                    </div>
+                  </div>
+                )}
+                {analysis.signature.postingRituals && analysis.signature.postingRituals.length > 0 && (
+                  <div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Posting rituals:</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {analysis.signature.postingRituals.slice(0, 5).map((r, i) => <Tag key={i} text={r} />)}
+                    </div>
+                  </div>
+                )}
+              </Section>
+            )}
+
+            {analysis.sources && (
+              <div style={{ paddingTop: 12, borderTop: `1px solid ${color}15`, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.35)" }}>
+                Analyzed from {analysis.sources.web?.length || 0} web sources
+                {analysis.sources.videos && analysis.sources.videos.length > 0 && ` • ${analysis.sources.videos.length} videos`}
+                {analysis.sources.tweets && analysis.sources.tweets > 0 && ` • ${analysis.sources.tweets} tweets`}
+                {" "}• depth: {analysis.sources.depth}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,39 +1,90 @@
 import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Generate AI posts based on fused personas
 export async function POST(req: NextRequest) {
   try {
-    const { personas, context, type, platform } = await req.json();
+    const { personas, context, type, platform, fusion } = await req.json();
 
     if (!personas || personas.length === 0) {
-      return NextResponse.json(
-        { error: "Personas required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Personas required" }, { status: 400 });
     }
 
-    // Calculate weighted influence of each persona
+    // Weighted normalization
     const totalWeight = personas.reduce((sum: number, p: any) => sum + (p.weight || 50), 0);
-    const normalizedPersonas = personas.map((p: any) => ({
+    const normalized = personas.map((p: any) => ({
       ...p,
       influence: (p.weight || 50) / totalWeight,
     }));
 
-    // Generate post based on persona styles
-    const post = generateFusedPost(normalizedPersonas, context, type, platform || "x");
+    // PRIORITY 1: Use fusion synthesisPrompt + Claude Haiku (best quality + cheap)
+    if (fusion?.synthesisPrompt && process.env.ANTHROPIC_API_KEY) {
+      try {
+        const post = await generateWithClaude(normalized, fusion, context, type, platform);
+        return NextResponse.json({ success: true, post, generatedAt: Date.now(), method: "claude-fusion" });
+      } catch (e) {
+        console.error("Claude generation failed, falling back:", e);
+      }
+    }
 
+    // PRIORITY 2: Fallback to rule-based generation (no Claude key / no fusion data)
+    const post = generateFusedPost(normalized, context, type, platform || "x");
     return NextResponse.json({
       success: true,
       post,
       generatedAt: Date.now(),
+      method: "rule-based",
     });
   } catch (error) {
     console.error("Generate post error:", error);
-    return NextResponse.json(
-      { error: "Failed to generate post" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to generate post" }, { status: 500 });
   }
+}
+
+// Use Claude Haiku with the fusion synthesisPrompt for authentic posts
+async function generateWithClaude(
+  personas: any[],
+  fusion: any,
+  context: string | undefined,
+  type: "post" | "reply",
+  platform: "x" | "telegram" = "x"
+): Promise<string> {
+  const charLimit = platform === "telegram" ? 1000 : 260;
+
+  const systemPrompt = `${fusion.synthesisPrompt}
+
+You are generating a single ${type === "reply" ? "reply" : "post"} for ${platform === "x" ? "X (Twitter)" : "Telegram"}.
+
+STRICT RULES:
+- Maximum ${charLimit} characters (HARD LIMIT)
+- Sound EXACTLY like the fused persona, not generic AI
+- Use specific catchphrases, quirks, sentence rhythms from the persona model
+- Never mention being an AI, bot, or fusion
+- No hashtags unless the persona uses them
+- Match the tone, vocabulary, emoji usage, and punctuation style
+
+PERSONAS BEING FUSED:
+${personas.map((p: any, i) => `
+${i + 1}. ${p.name} (${Math.round(p.influence * 100)}% influence)
+Voice: ${p.voice?.tone || p.expression || "unknown"}
+Catchphrases: ${(p.voice?.catchphrases || []).join(", ")}
+Vocab: ${p.voice?.vocabulary || "normal"}
+`).join("\n")}
+
+${context ? `CONTEXT: ${context}\n` : ""}
+
+Output ONLY the post text. No preamble, no quotes, no explanations.`;
+
+  const response = await anthropic.messages.create({
+    model: "claude-haiku-4-5",
+    max_tokens: 400,
+    messages: [{ role: "user", content: systemPrompt }],
+  });
+
+  const text = (response.content[0] as any).text || "";
+  return text.trim().replace(/^["']|["']$/g, "").slice(0, charLimit);
 }
 
 function generateFusedPost(

@@ -1,13 +1,108 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+// ====================================================================
+// DEEP PERSONA ANALYSIS — 7-dimension psychological model
+// Used to fuel authentic-feeling post generation and fusion dynamics.
+// ====================================================================
+
 export interface PersonaAnalysis {
+  // Legacy fields (kept for backward compat with older agents)
   description: string;
   traits: string[];
   expression: string;
   northStar: string;
   topics?: string[];
   tone?: string;
+
+  // ===== NEW: 7-dimension deep model (optional for migration) =====
+
+  // 1. IDENTITY — who they are
+  identity?: {
+    profession: string;
+    ageOrGeneration?: string;
+    nationality?: string;
+    culturalBackground?: string;
+    religion?: string;
+    politicalLean?: string;     // left/right/libertarian/anarchist/none
+    socioeconomic?: string;     // billionaire/middle-class/working-class
+  };
+
+  // 2. VOICE — how they talk
+  voice?: {
+    tone: string;                     // provocative, measured, aggressive, playful
+    vocabulary: string;               // simple/technical/intellectual/street
+    sentenceRhythm: string;           // short punchy / long nested / fragmented
+    catchphrases: string[];           // signature phrases, verbal tics
+    emojiUsage: string;               // none / sparing / heavy / specific emojis
+    capitalizationStyle: string;      // normal / ALL CAPS bursts / lowercase / Title
+    punctuationQuirks: string;        // ellipsis-heavy, em-dashes, no punctuation
+    profanityLevel: string;           // family-friendly / casual / unhinged
+    metaphorDomains: string[];        // sports, science, war, religion, food
+  };
+
+  // 3. PSYCHOLOGY — why they are how they are
+  psychology?: {
+    coreBeliefs: string[];            // deeply-held worldviews
+    values: string[];                 // what they prioritize
+    fears: string[];                  // triggers, insecurities
+    motivations: string[];            // what drives them
+    egoPattern: string;               // humble / confident / narcissistic / insecure
+    humorStyle: string;               // dry / absurd / self-deprecating / edgy / cruel
+    vulnerabilityLevel: string;       // stoic / guarded / open / vulnerable
+    originStory?: string;             // formative experiences that shaped them
+    heroes?: string[];                // people they admire / reference
+  };
+
+  // 4. BEHAVIOR — how they operate online
+  behavior?: {
+    postingFrequency: string;         // rare / regular / prolific / constant
+    engagementStyle: string;          // how they interact (dunks, replies, ignores)
+    controversyAppetite: string;      // seeks / tolerates / avoids
+    memeFluency: string;              // native / forced / absent
+    selfPromotionRatio: string;       // low / balanced / heavy
+    runningFeuds?: string[];          // public enemies they clash with
+    apologyPattern: string;           // double-down / quiet-delete / full-retraction
+    topicRotation: string[];          // recurring themes
+  };
+
+  // 5. CULTURE — their reference library
+  culture?: {
+    booksReferenced?: string[];
+    musicTaste?: string[];
+    moviesQuoted?: string[];
+    historicalFiguresInvoked?: string[];
+    scientificInterests?: string[];
+    sportsReferences?: string[];
+  };
+
+  // 6. SIGNATURE — unique quirks that make them instantly recognizable
+  signature?: {
+    postingRituals?: string[];        // "3am shitposts", "Sunday blog drops"
+    visualIdentity?: string[];        // signature objects (Cybertruck, Yeezys)
+    runningJokes?: string[];
+    nicknamesGiven?: string[];        // names they give to opponents
+    routines?: string[];              // morning rituals, ice baths, etc.
+  };
+
+  // 7. SOURCES — where the analysis came from (for transparency)
+  sources?: {
+    web?: string[];                   // URLs analyzed
+    videos?: { title: string; url: string }[];
+    tweets?: number;                  // how many tweets analyzed
+    depth: "fast" | "deep" | "obsessive";
+    analyzedAt: number;
+  };
+}
+
+// Fusion dynamics — captured when 2 personas are merged
+export interface FusionDynamics {
+  valueConflicts: string[];           // where they'd disagree
+  commonGround: string[];             // shared beliefs
+  creativeTension: string;            // what makes the combo interesting
+  blendVoice: string;                 // description of hybrid voice
+  sharedEnemies: string[];            // who they'd both dunk on
+  synthesisPrompt: string;            // system prompt for post generation
 }
 
 export interface Persona {
@@ -83,6 +178,9 @@ export interface ChimeraAgent {
   planSubscribedAt?: number;
   planPaymentTx?: string;
   planPaymentCurrency?: string;
+
+  // Fusion dynamics — generated when 2 personas combine
+  fusion?: FusionDynamics;
 
   // Forge fee tracking
   forgePaymentTx?: string;

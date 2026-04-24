@@ -158,7 +158,7 @@ function DashboardContent() {
                 </div>
               )}
 
-              {currentAgent.xConnected && <PostTweetButton agentId={currentAgent.id} personas={currentAgent.personas} />}
+              {currentAgent.xConnected && <PostTweetButton agentId={currentAgent.id} personas={currentAgent.personas} fusion={currentAgent.fusion} />}
             </div>
           )}
         </>
@@ -251,14 +251,14 @@ function PostCard({ post }: any) {
     </div>
   );
 }
-function PostTweetButton({ agentId, personas }: any) {
+function PostTweetButton({ agentId, personas, fusion }: any) {
   const [posting, setPosting] = useState(false);
   const [text, setText] = useState("");
   const [show, setShow] = useState(false);
 
   const gen = async () => {
     try {
-      const res = await fetch("/api/generate-post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ personas: personas.map((p: any) => p.name), platform: "x" }) });
+      const res = await fetch("/api/generate-post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ personas, platform: "x", fusion }) });
       const d = await res.json();
       if (d.post) setText(d.post);
     } catch {}
