@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useChimeraStore, PersonaAnalysis, ChimeraAgent } from "@/lib/store";
 import { FORGE_FEE_USDT, FORGE_FEE_SOL } from "@/lib/constants";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { VersionedTransaction } from "@solana/web3.js";
 import { PaymentButton } from "@/components/PaymentButton";
 
 interface PersonaInput {
@@ -19,7 +20,8 @@ interface PersonaInput {
 export default function CreatePage() {
   const router = useRouter();
   const { addAgent, clearSelectedPersonas } = useChimeraStore();
-  const { publicKey } = useWallet();
+  const { publicKey, sendTransaction } = useWallet();
+  const { connection } = useConnection();
 
   const [step, setStep] = useState(1);
   const [analyzing, setAnalyzing] = useState(false);
@@ -129,15 +131,22 @@ export default function CreatePage() {
 
   const handleLaunchToken = async () => {
     if (!tokenName || !tokenSymbol) return;
+    if (!publicKey || !sendTransaction) {
+      setError("Connect your Solana wallet first.");
+      return;
+    }
+
     setIsLaunching(true); setError(null);
     try {
+      // 1. Get the unsigned/partially-signed transaction from our server
       const res = await fetch("/api/launch-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: tokenName, symbol: tokenSymbol,
+          name: tokenName,
+          symbol: tokenSymbol,
           description: tokenDesc || `${tokenName} - An Orthrus fusion of ${personaA.name} × ${personaB.name}`,
-          creatorWallet: publicKey?.toBase58(),
+          creatorWallet: publicKey.toBase58(),
           personas: [
             { name: personaA.name, weight },
             { name: personaB.name, weight: 100 - weight },
@@ -145,10 +154,43 @@ export default function CreatePage() {
         }),
       });
       const data = await res.json();
-      if (data.success) setLaunchResult(data);
-      else setError(data.error || "Launch failed");
-    } catch { setError("Network error."); }
-    finally { setIsLaunching(false); }
+      if (!data.success || !data.partialTx) {
+        setError(data.error || "PumpFun didn't return a valid transaction. Try again.");
+        return;
+      }
+
+      // 2. Deserialize the partially-signed tx
+      const txBytes = Uint8Array.from(atob(data.partialTx), c => c.charCodeAt(0));
+      const tx = VersionedTransaction.deserialize(txBytes);
+
+      // 3. User signs with their Phantom wallet + broadcast
+      const signature = await sendTransaction(tx, connection);
+
+      // 4. Confirm it landed on-chain
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
+      await connection.confirmTransaction(
+        { signature, blockhash, lastValidBlockHeight },
+        "confirmed"
+      );
+
+      // 5. Success — token is LIVE on pump.fun
+      setLaunchResult({
+        ...data,
+        signature,
+        solscanUrl: `https://solscan.io/tx/${signature}`,
+        tokenAddress: data.tokenAddress,
+        pumpfunUrl: `https://pump.fun/coin/${data.tokenAddress}`,
+      });
+    } catch (err: any) {
+      console.error("Launch error:", err);
+      let msg = "Launch failed.";
+      if (err.message?.includes("User rejected")) msg = "Launch cancelled.";
+      else if (err.message?.includes("insufficient")) msg = "Insufficient SOL for gas.";
+      else if (err.message) msg = err.message.slice(0, 200);
+      setError(msg);
+    } finally {
+      setIsLaunching(false);
+    }
   };
 
   const handleDeploy = () => {
@@ -407,15 +449,31 @@ export default function CreatePage() {
             <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 11, color: "#00FFA3", letterSpacing: 3, textTransform: "uppercase", marginBottom: 16 }}>🚀 Launch on PumpFun (Optional)</div>
             {launchResult ? (
               <div style={{ background: "rgba(0,255,163,0.1)", border: "1px solid rgba(0,255,163,0.3)", borderRadius: 12, padding: 16 }}>
-                <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 14, color: "#00FFA3", marginBottom: 8, letterSpacing: 1 }}>🚀 TOKEN LAUNCHED</div>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.7)", wordBreak: "break-all" }}>
+                <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 14, color: "#00FFA3", marginBottom: 8, letterSpacing: 1 }}>🚀 TOKEN LIVE ON-CHAIN</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>Mint Address:</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.7)", wordBreak: "break-all", marginBottom: 10 }}>
                   {launchResult.tokenAddress}
                 </div>
-                {launchResult.pumpfunUrl && (
-                  <a href={launchResult.pumpfunUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#00F5FF", display: "block", marginTop: 8 }}>
-                    View on PumpFun →
-                  </a>
+                {launchResult.signature && (
+                  <>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>Transaction:</div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.6)", wordBreak: "break-all", marginBottom: 10 }}>
+                      {launchResult.signature}
+                    </div>
+                  </>
                 )}
+                <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+                  {launchResult.pumpfunUrl && (
+                    <a href={launchResult.pumpfunUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#00F5FF" }}>
+                      View on PumpFun →
+                    </a>
+                  )}
+                  {launchResult.solscanUrl && (
+                    <a href={launchResult.solscanUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#FF00E1" }}>
+                      View on Solscan →
+                    </a>
+                  )}
+                </div>
               </div>
             ) : (
               <>
