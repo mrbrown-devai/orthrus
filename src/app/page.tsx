@@ -108,22 +108,21 @@ export default function Home() {
         <section style={{ minHeight: "90vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "60px 24px" }}>
           {/* Mascot */}
           <div style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(30px)", transition: "all 1s cubic-bezier(0.16,1,0.3,1)", marginBottom: 24 }}>
-            <img src="/mascot-1.jpg" alt="Orthrus" style={{ width: "min(340px, 70vw)", height: "auto", borderRadius: 20, filter: "drop-shadow(0 0 40px rgba(0,245,255,0.4)) drop-shadow(0 0 60px rgba(255,0,225,0.3))" }} />
+            <img
+              src="/logo.png"
+              alt="Orthrus"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/mascot-1.jpg"; }}
+              style={{
+                width: "min(420px, 80vw)",
+                height: "auto",
+                mixBlendMode: "screen",
+                filter: "brightness(1.15) contrast(1.15) drop-shadow(0 0 40px rgba(0,245,255,0.4)) drop-shadow(0 0 80px rgba(255,0,225,0.3))"
+              }}
+            />
           </div>
 
-          {/* Top meander border */}
-          <div style={{ width: "min(600px, 90vw)", marginBottom: 16, opacity: visible ? 0.6 : 0, transition: "opacity 1s 0.3s" }}>
-            <MeanderBorder color="#00F5FF" />
-          </div>
-
-          <h1 style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: "clamp(48px, 9vw, 120px)", color: "#fff", margin: "0", lineHeight: 1, letterSpacing: "clamp(4px, 1vw, 12px)", opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(40px)", transition: "all 1s cubic-bezier(0.16,1,0.3,1) 0.2s", background: "linear-gradient(90deg, #00F5FF, #9945FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", textShadow: "0 0 60px rgba(0,245,255,0.3)" }}>
-            ORTHRUS
-          </h1>
-
-          {/* Bottom meander border */}
-          <div style={{ width: "min(600px, 90vw)", marginTop: 12, marginBottom: 24, opacity: visible ? 0.6 : 0, transition: "opacity 1s 0.3s" }}>
-            <MeanderBorder color="#FF00E1" flip />
-          </div>
+          {/* Hidden SEO H1 (logo image contains the wordmark) */}
+          <h1 style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}>ORTHRUS</h1>
 
           <h2 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 900, fontSize: "clamp(32px, 5vw, 56px)", color: "#fff", margin: "16px 0 0", lineHeight: 1.1, letterSpacing: -1, opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(40px)", transition: "all 1s cubic-bezier(0.16,1,0.3,1) 0.4s" }}>
             Two Heads.<br />

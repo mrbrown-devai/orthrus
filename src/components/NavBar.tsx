@@ -24,10 +24,20 @@ export function NavBar() {
       padding: "0 32px", display: "flex", alignItems: "center", height: 56
     }}>
       <Link href="/" style={{ textDecoration: "none" }}>
-        <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 18, marginRight: 40, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, letterSpacing: 2 }}>
-          <OrthrusGlyph size={22} />
-          <span style={{ background: "linear-gradient(90deg, #00F5FF, #9945FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ORTHRUS</span>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: "rgba(153,69,255,0.2)", color: "#9945FF", marginLeft: 4, letterSpacing: 1 }}>SOL</span>
+        <div style={{ marginRight: 40, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, height: 40 }}>
+          <img
+            src="/logo.png"
+            alt="Orthrus"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            style={{
+              height: 56,
+              width: "auto",
+              mixBlendMode: "screen",
+              filter: "brightness(1.15) contrast(1.1) drop-shadow(0 0 8px rgba(0,245,255,0.3))",
+              objectFit: "contain",
+            }}
+          />
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "2px 6px", borderRadius: 4, background: "rgba(153,69,255,0.2)", color: "#9945FF", letterSpacing: 1 }}>SOL</span>
         </div>
       </Link>
 
