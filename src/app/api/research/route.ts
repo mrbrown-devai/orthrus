@@ -31,8 +31,13 @@ export async function POST(request: NextRequest) {
     console.log(`[research] Completed "${name}" in ${elapsedMs}ms`);
 
     if (!result.analysis) {
+      console.error(`[research] No analysis returned for "${name}"`);
       return NextResponse.json(
-        { error: "Research returned no analysis", elapsed: elapsedMs },
+        {
+          error: "Research returned no analysis",
+          details: "Claude responded but the JSON couldn't be parsed. Check Vercel logs.",
+          elapsed: elapsedMs,
+        },
         { status: 500 }
       );
     }

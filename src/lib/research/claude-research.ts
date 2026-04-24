@@ -119,15 +119,16 @@ export async function researchPersonaWithClaude(
   const client = createAnthropicClient();
   const response = await client.messages.create({
     model: "claude-haiku-4-5", // Haiku works within Claude Max rate limits
-    max_tokens: 8000,
+    max_tokens: 16000,
     tools: [
       {
         type: "web_search_20250305",
         name: "web_search",
-        max_uses: 8,
+        max_uses: 6,
       } as any,
     ],
     messages: [{ role: "user", content: prompt }],
+    system: "You are a persona research expert. You MUST end your response with ONLY a valid JSON object. Use web_search to gather info, then output the JSON. Do NOT wrap in markdown code fences. Do NOT add commentary after the JSON.",
   });
 
   // Extract text + sources from response
@@ -147,16 +148,59 @@ export async function researchPersonaWithClaude(
     }
   }
 
-  // Parse JSON from response
+  // Parse JSON from response — be robust about markdown, multiple blocks, etc.
+  console.log(`[claude-research] Raw response length: ${fullText.length} chars`);
+  console.log(`[claude-research] Response preview: ${fullText.slice(0, 500)}`);
+
   let analysis: any = null;
-  try {
-    const jsonMatch = fullText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      analysis = JSON.parse(jsonMatch[0]);
-    }
-  } catch (e) {
-    console.error("Failed to parse Claude research JSON:", e);
-    throw new Error("Claude returned invalid JSON");
+
+  // Strip common markdown wrappers
+  const cleaned = fullText
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+
+  // Try different extraction strategies
+  const attempts = [
+    // 1. The whole thing if it's already JSON
+    () => JSON.parse(cleaned),
+    // 2. Greedy match for outermost {...}
+    () => {
+      const m = cleaned.match(/\{[\s\S]*\}/);
+      if (!m) throw new Error("no json braces found");
+      return JSON.parse(m[0]);
+    },
+    // 3. Balance-count brace extraction
+    () => {
+      const start = cleaned.indexOf("{");
+      if (start === -1) throw new Error("no opening brace");
+      let depth = 0;
+      for (let i = start; i < cleaned.length; i++) {
+        if (cleaned[i] === "{") depth++;
+        else if (cleaned[i] === "}") {
+          depth--;
+          if (depth === 0) return JSON.parse(cleaned.slice(start, i + 1));
+        }
+      }
+      throw new Error("unbalanced braces");
+    },
+  ];
+
+  let lastError: any = null;
+  for (const attempt of attempts) {
+    try {
+      analysis = attempt();
+      if (analysis && typeof analysis === "object" && analysis.description) {
+        break; // Looks valid
+      }
+      analysis = null;
+    } catch (e) { lastError = e; }
+  }
+
+  if (!analysis) {
+    console.error("[claude-research] All JSON parse attempts failed. Last error:", lastError);
+    console.error("[claude-research] Full response text:", fullText);
+    throw new Error(`Claude returned invalid JSON. Response preview: ${fullText.slice(0, 200)}`);
   }
 
   return {
