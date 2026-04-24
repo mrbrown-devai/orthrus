@@ -37,17 +37,17 @@ export const PLANS: Record<PlanId, PlanConfig> = {
   },
   degen: {
     id: "degen", name: "Degen", postsPerDay: 10, repliesPerDay: 10, autopilot: true,
-    priceUsdt: 10, priceSol: 0.12, color: "#FF00E1",
+    priceUsdt: 20, priceSol: 0.25, color: "#FF00E1",
     features: ["10 posts/day", "10 replies/day", "Manual autopilot", "Basic on-chain actions"],
   },
   alpha: {
     id: "alpha", name: "Alpha", postsPerDay: 30, repliesPerDay: 50, autopilot: true,
-    priceUsdt: 20, priceSol: 0.24, color: "#9945FF",
+    priceUsdt: 80, priceSol: 1, color: "#9945FF",
     features: ["30 posts/day", "50 replies/day", "On-post autopilot", "All on-chain actions", "Priority queue"],
   },
   whale: {
     id: "whale", name: "Whale", postsPerDay: 100, repliesPerDay: 200, autopilot: true,
-    priceUsdt: 125, priceSol: 1.47, color: "#00FFA3",
+    priceUsdt: 300, priceSol: 3.5, color: "#00FFA3",
     features: ["100 posts/day", "200 replies/day", "Scheduled autopilot", "All on-chain actions", "Priority queue", "Marketplace featured"],
   },
 };
