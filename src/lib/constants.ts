@@ -52,7 +52,10 @@ export const PLANS: Record<PlanId, PlanConfig> = {
   },
 };
 
-// PumpFun Configuration
+// PumpFun / Pumpportal Configuration
+// NOTE: Neither Pump.fun nor Pumpportal operate an official referral program.
+// We pass the env var to the API in case it's ever honored, but expected revenue = $0.
+// Actual revenue comes from the forge fee + plan subscriptions + any Orthrus launch fee.
 export const PUMPFUN_API_URL = "https://pumpportal.fun/api";
 export const PUMP_FUN_REFERRAL_WALLET = process.env.PUMP_FUN_REFERRAL_WALLET || TREASURY_ADDRESS;
 
