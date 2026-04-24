@@ -9,10 +9,11 @@ import { PaymentButton } from "@/components/PaymentButton";
 
 interface PersonaInput {
   name: string;
-  xHandle: string;
-  instagram: string;
-  tiktok: string;
   webLink: string;
+  // Kept optional for backward compat with store — AI now auto-discovers these
+  xHandle?: string;
+  instagram?: string;
+  tiktok?: string;
 }
 
 export default function CreatePage() {
@@ -26,8 +27,8 @@ export default function CreatePage() {
   const [analyzePhase, setAnalyzePhase] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const [personaA, setPersonaA] = useState<PersonaInput>({ name: "", xHandle: "", instagram: "", tiktok: "", webLink: "" });
-  const [personaB, setPersonaB] = useState<PersonaInput>({ name: "", xHandle: "", instagram: "", tiktok: "", webLink: "" });
+  const [personaA, setPersonaA] = useState<PersonaInput>({ name: "", webLink: "" });
+  const [personaB, setPersonaB] = useState<PersonaInput>({ name: "", webLink: "" });
   const [analysisA, setAnalysisA] = useState<PersonaAnalysis | null>(null);
   const [analysisB, setAnalysisB] = useState<PersonaAnalysis | null>(null);
   const [weight, setWeight] = useState(50);
@@ -186,12 +187,7 @@ export default function CreatePage() {
             <div style={LABEL_CYAN}>HEAD A</div>
             <InputField label="Full Name *" value={personaA.name} onChange={v => setPersonaA({ ...personaA, name: v })} placeholder="e.g. Elon Musk" />
             <div style={{ marginTop: 12 }}>
-              <InputField label="Web Link (Wikipedia, site)" value={personaA.webLink} onChange={v => setPersonaA({ ...personaA, webLink: v })} placeholder="https://..." />
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 12 }}>
-              <InputField label="X Handle" value={personaA.xHandle} onChange={v => setPersonaA({ ...personaA, xHandle: v })} placeholder="@handle" />
-              <InputField label="Instagram" value={personaA.instagram} onChange={v => setPersonaA({ ...personaA, instagram: v })} placeholder="@user" />
-              <InputField label="TikTok" value={personaA.tiktok} onChange={v => setPersonaA({ ...personaA, tiktok: v })} placeholder="@user" />
+              <InputField label="Web Link (optional — Wikipedia, personal site, etc.)" value={personaA.webLink} onChange={v => setPersonaA({ ...personaA, webLink: v })} placeholder="https://... (helps AI prioritize sources)" />
             </div>
           </div>
 
@@ -199,12 +195,7 @@ export default function CreatePage() {
             <div style={LABEL_MAGENTA}>HEAD B</div>
             <InputField label="Full Name *" value={personaB.name} onChange={v => setPersonaB({ ...personaB, name: v })} placeholder="e.g. Kanye West" />
             <div style={{ marginTop: 12 }}>
-              <InputField label="Web Link (Wikipedia, site)" value={personaB.webLink} onChange={v => setPersonaB({ ...personaB, webLink: v })} placeholder="https://..." />
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 12 }}>
-              <InputField label="X Handle" value={personaB.xHandle} onChange={v => setPersonaB({ ...personaB, xHandle: v })} placeholder="@handle" />
-              <InputField label="Instagram" value={personaB.instagram} onChange={v => setPersonaB({ ...personaB, instagram: v })} placeholder="@user" />
-              <InputField label="TikTok" value={personaB.tiktok} onChange={v => setPersonaB({ ...personaB, tiktok: v })} placeholder="@user" />
+              <InputField label="Web Link (optional — Wikipedia, personal site, etc.)" value={personaB.webLink} onChange={v => setPersonaB({ ...personaB, webLink: v })} placeholder="https://... (helps AI prioritize sources)" />
             </div>
           </div>
 
