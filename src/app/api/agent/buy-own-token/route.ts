@@ -15,11 +15,23 @@ export async function POST(request: NextRequest) {
     if (!keypair) return NextResponse.json({ error: "No wallet found" }, { status: 404 });
 
     const signature = await buyTokenWithSol(keypair, tokenMint, amountSol);
+
+    // Award XP (best-effort)
+    let xpResult: any = null;
+    try {
+      const { awardXp } = await import("@/lib/xp-store");
+      const { getAgent } = await import("@/lib/agent-registry");
+      const { XP_REWARDS } = await import("@/lib/leveling");
+      const config = await getAgent(agentId);
+      xpResult = await awardXp(agentId, XP_REWARDS.buy_own_token, config?.plan);
+    } catch (e) { console.error("XP award failed (non-fatal):", e); }
+
     return NextResponse.json({
       success: true,
       signature,
       solscanUrl: `https://solscan.io/tx/${signature}`,
       pumpfunUrl: `https://pump.fun/coin/${tokenMint}`,
+      xp: xpResult,
     });
   } catch (error) {
     console.error("Buy own token error:", error);

@@ -19,10 +19,22 @@ export async function POST(request: NextRequest) {
     }
 
     const signature = await jupiterSwap(keypair, inputMint, outputMint, amount, slippageBps || 300);
+
+    // Award XP (best-effort)
+    let xpResult: any = null;
+    try {
+      const { awardXp } = await import("@/lib/xp-store");
+      const { getAgent } = await import("@/lib/agent-registry");
+      const { XP_REWARDS } = await import("@/lib/leveling");
+      const config = await getAgent(agentId);
+      xpResult = await awardXp(agentId, XP_REWARDS.swap, config?.plan);
+    } catch (e) { console.error("XP award failed (non-fatal):", e); }
+
     return NextResponse.json({
       success: true,
       signature,
       solscanUrl: `https://solscan.io/tx/${signature}`,
+      xp: xpResult,
     });
   } catch (error) {
     console.error("Trade error:", error);

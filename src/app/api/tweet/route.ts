@@ -86,6 +86,17 @@ export async function POST(request: NextRequest) {
     // Post the tweet
     const tweet = await postTweet(accessToken, text);
 
+    // Award XP for the post (best-effort, non-blocking)
+    let xpResult: any = null;
+    try {
+      const { awardXp, recordPost } = await import("@/lib/xp-store");
+      const { getAgent } = await import("@/lib/agent-registry");
+      const { XP_REWARDS } = await import("@/lib/leveling");
+      const config = await getAgent(agentId);
+      await recordPost(agentId);
+      xpResult = await awardXp(agentId, XP_REWARDS.post, config?.plan);
+    } catch (e) { console.error("XP award failed (non-fatal):", e); }
+
     return NextResponse.json({
       success: true,
       tweet: {
@@ -93,6 +104,7 @@ export async function POST(request: NextRequest) {
         text: tweet.text,
         url: `https://twitter.com/${tokenData.username}/status/${tweet.id}`,
       },
+      xp: xpResult,
     });
   } catch (error) {
     console.error("Tweet post error:", error);

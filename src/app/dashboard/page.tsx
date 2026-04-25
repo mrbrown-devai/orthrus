@@ -380,6 +380,17 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
 
   useEffect(() => { fetchXStatus(); }, [agent.id]);
 
+  // Level / XP polling
+  const [levelInfo, setLevelInfo] = useState<any>(null);
+  const fetchLevel = async () => {
+    try {
+      const res = await fetch(`/api/agent/level-info?agentId=${agent.id}`);
+      const d = await res.json();
+      if (d.kvConfigured !== false) setLevelInfo(d);
+    } catch {}
+  };
+  useEffect(() => { fetchLevel(); const id = setInterval(fetchLevel, 30000); return () => clearInterval(id); }, [agent.id]);
+
   const fetchBalance = async () => {
     try {
       const res = await fetch("/api/agent/balance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId: agent.id }) });
@@ -427,6 +438,73 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* LEVEL & XP — Pokemon-style progression */}
+      {levelInfo && (
+        <div style={{ background: "linear-gradient(135deg, rgba(0,245,255,0.06), rgba(255,0,225,0.04), rgba(153,69,255,0.06))", border: "1px solid rgba(0,245,255,0.3)", borderRadius: 16, padding: 24, boxShadow: "0 0 40px rgba(0,245,255,0.1)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", letterSpacing: 3, textTransform: "uppercase" }}>Level {levelInfo.level} / {levelInfo.maxLevel}</div>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 32, fontWeight: 900, background: "linear-gradient(90deg, #00F5FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: 2, marginTop: 2 }}>{levelInfo.levelName}</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 24, fontWeight: 900, color: "#00FFA3" }}>{levelInfo.xp.toLocaleString()} XP</div>
+              {levelInfo.xpToNext > 0 && (
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
+                  {levelInfo.xpToNext.toLocaleString()} XP to L{levelInfo.level + 1}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          {levelInfo.nextLevelXp && (
+            <div style={{ height: 8, borderRadius: 4, background: "rgba(0,0,0,0.4)", overflow: "hidden", marginBottom: 16 }}>
+              <div style={{
+                height: "100%", width: `${Math.round(levelInfo.progressToNext * 100)}%`,
+                background: "linear-gradient(90deg, #00F5FF, #9945FF, #FF00E1)",
+                transition: "width 0.5s",
+                boxShadow: "0 0 10px rgba(0,245,255,0.5)",
+              }} />
+            </div>
+          )}
+
+          {/* Unlocked skills */}
+          {levelInfo.skills && levelInfo.skills.length > 0 && (
+            <div>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Unlocked Skills</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {levelInfo.skills.map((s: any) => (
+                  <span key={s.key} title={s.description} style={{
+                    fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
+                    padding: "6px 12px", borderRadius: 6,
+                    background: "rgba(0,245,255,0.08)",
+                    border: "1px solid rgba(0,245,255,0.25)",
+                    color: "#00F5FF",
+                  }}>{s.emoji} {s.name}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Achievements */}
+          {levelInfo.achievements && levelInfo.achievements.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Achievements</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {levelInfo.achievements.map((a: any) => (
+                  <span key={a.key} title={a.description} style={{
+                    fontSize: 20, padding: "4px 8px", borderRadius: 6,
+                    background: "rgba(255,0,225,0.08)",
+                    border: "1px solid rgba(255,0,225,0.25)",
+                  }}>{a.emoji}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* X Autopilot — the main feature users care about */}
       <div style={{ background: "linear-gradient(135deg, rgba(0,245,255,0.05), rgba(255,0,225,0.05))", border: "1px solid rgba(153,69,255,0.3)", borderRadius: 16, padding: 24, boxShadow: "0 0 30px rgba(0,245,255,0.08)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>

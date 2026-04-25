@@ -133,5 +133,30 @@ async function processAgent(agentId: string): Promise<any> {
     }
   }
 
-  return { posted: posted.length, errors, remaining: remaining - posted.length };
+  // ALSO run one on-chain action (trait-driven) for this agent.
+  // This makes autopilot truly autonomous: posts AND on-chain.
+  let onchain: any = null;
+  try {
+    const traits = (config.personas || []).flatMap((p: any) => p.analysis?.traits || []);
+    const ownTokenMint = (config as any).tokenCA;
+    const apRes = await fetch(`${APP_URL}/api/agent/autopilot`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        agentId,
+        traits,
+        ownTokenMint,
+      }),
+    });
+    onchain = await apRes.json();
+  } catch (e: any) {
+    onchain = { error: e?.message || "onchain autopilot failed" };
+  }
+
+  return {
+    posted: posted.length,
+    errors,
+    remaining: remaining - posted.length,
+    onchain,
+  };
 }
