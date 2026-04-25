@@ -8,7 +8,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://orthrus-theta.vercel
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, symbol, description, creatorWallet, personas, imageDataUrl, imageUrl, twitter, telegram, website } = await request.json();
+    const { name, symbol, description, creatorWallet, personas, imageDataUrl, imageUrl, twitter, telegram, website, initialBuySol } = await request.json();
 
     if (!name || !symbol) {
       return NextResponse.json({ error: "Token name and symbol required" }, { status: 400 });
@@ -96,7 +96,9 @@ export async function POST(request: NextRequest) {
       },
       mint: mintKeypair.publicKey.toBase58(),
       denominatedInSol: "true",
-      amount: 0, // 0 = just create, no initial dev buy
+      // initialBuySol = optional dev buy in SOL bundled with creation tx.
+      // Coerced + clamped server-side (0 to 10 SOL) for safety.
+      amount: Math.max(0, Math.min(10, Number(initialBuySol) || 0)),
       slippage: 10,
       priorityFee: 0.0005,
       pool: "pump",

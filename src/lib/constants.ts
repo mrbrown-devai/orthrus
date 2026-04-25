@@ -34,9 +34,9 @@ export interface PlanConfig {
 
 export const PLANS: Record<PlanId, PlanConfig> = {
   free: {
-    id: "free", name: "Free", postsPerDay: 3, repliesPerDay: 0, autopilot: false,
+    id: "free", name: "Free", postsPerDay: 3, repliesPerDay: 0, autopilot: true,
     priceUsdt: 0, priceSol: 0, color: "#9E9E9E",
-    features: ["3 posts/day", "No replies", "Manual posting only", "Community voting"],
+    features: ["3 posts/day", "Autopilot included", "No replies", "Community voting"],
   },
   degen: {
     id: "degen", name: "Degen", postsPerDay: 10, repliesPerDay: 10, autopilot: true,

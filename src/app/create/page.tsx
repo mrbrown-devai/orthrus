@@ -48,6 +48,7 @@ export default function CreatePage() {
   const [tokenDesc, setTokenDesc] = useState("");
   const [tokenImageData, setTokenImageData] = useState<string | null>(null); // base64 data URL
   const [tokenImageName, setTokenImageName] = useState<string>("");
+  const [initialBuySol, setInitialBuySol] = useState<string>(""); // optional dev buy bundled with creation
   const [isLaunching, setIsLaunching] = useState(false);
   const [launchResult, setLaunchResult] = useState<any>(null);
 
@@ -154,6 +155,7 @@ export default function CreatePage() {
             { name: personaB.name, weight: 100 - weight },
           ],
           imageDataUrl: tokenImageData, // optional user-uploaded image as data URL
+          initialBuySol: parseFloat(initialBuySol) || 0, // dev buy in SOL (0 = create only)
         }),
       });
       const data = await res.json();
@@ -532,6 +534,38 @@ export default function CreatePage() {
                     </div>
                     <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 6, lineHeight: 1.5 }}>
                       If no image provided, the Orthrus logo will be used.
+                    </p>
+                  </div>
+
+                  {/* Initial dev buy — bundles a buy with the creation tx */}
+                  <div>
+                    <label style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 6, letterSpacing: 1, textTransform: "uppercase" }}>
+                      Initial Dev Buy (optional)
+                    </label>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.01"
+                        value={initialBuySol}
+                        onChange={(e) => setInitialBuySol(e.target.value)}
+                        placeholder="0.00"
+                        style={{
+                          flex: 1,
+                          background: "rgba(0,0,0,0.3)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: 8,
+                          padding: "12px 14px",
+                          color: "#fff",
+                          fontFamily: "'JetBrains Mono', monospace",
+                          fontSize: 13,
+                        }}
+                      />
+                      <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 13, color: "#00FFA3", letterSpacing: 2 }}>SOL</span>
+                    </div>
+                    <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 6, lineHeight: 1.5 }}>
+                      Bundle an instant buy with creation (anti-snipe). Leave 0 to just create. Max 10 SOL. Costs SOL + ~0.02 fee.
                     </p>
                   </div>
                 </div>

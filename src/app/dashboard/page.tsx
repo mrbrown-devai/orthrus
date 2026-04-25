@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useChimeraStore, ChimeraAgent } from "@/lib/store";
 import { XComplianceModal } from "@/components/XComplianceModal";
+import { InfoTooltip } from "@/components/InfoTooltip";
 
 export default function DashboardPage() {
   return <Suspense fallback={<DashboardLoading />}><DashboardContent /></Suspense>;
@@ -302,6 +303,40 @@ function PostTweetButton({ agentId, personas, fusion }: any) {
     </div>
   );
 }
+function PreviewNextPost({ personas, fusion }: any) {
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const gen = async () => {
+    setLoading(true); setPreview(null);
+    try {
+      const res = await fetch("/api/generate-post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ personas, platform: "x", fusion, type: "post" }) });
+      const d = await res.json();
+      setPreview(d.post || d.error || "No preview");
+    } catch (e: any) { setPreview("Failed: " + (e?.message || "unknown")); }
+    finally { setLoading(false); }
+  };
+  return (
+    <div style={{ marginTop: 16, padding: 14, background: "rgba(255,0,225,0.04)", border: "1px solid rgba(255,0,225,0.2)", borderRadius: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: preview ? 12 : 0 }}>
+        <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#FF00E1", letterSpacing: 2, textTransform: "uppercase", display: "flex", alignItems: "center" }}>
+          👁 Preview Next Post
+          <InfoTooltip title="Preview Next Post" color="#FF00E1">
+            See what your beast would post on X right now — generated from your fusion&apos;s voice DNA without sending anything to Twitter. Click again for a fresh sample.
+          </InfoTooltip>
+        </div>
+        <button onClick={gen} disabled={loading} style={{ padding: "6px 14px", borderRadius: 8, cursor: loading ? "wait" : "pointer", background: "rgba(255,0,225,0.1)", border: "1px solid rgba(255,0,225,0.3)", color: "#FF00E1", fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>
+          {loading ? "Generating..." : preview ? "↻ Regenerate" : "Generate"}
+        </button>
+      </div>
+      {preview && (
+        <div style={{ padding: 12, background: "rgba(0,0,0,0.4)", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "#fff", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+          {preview}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function formatNumber(n: number): string {
   if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
   if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
@@ -444,7 +479,16 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
         <div style={{ background: "linear-gradient(135deg, rgba(0,245,255,0.06), rgba(255,0,225,0.04), rgba(153,69,255,0.06))", border: "1px solid rgba(0,245,255,0.3)", borderRadius: 16, padding: 24, boxShadow: "0 0 40px rgba(0,245,255,0.1)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <div>
-              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", letterSpacing: 3, textTransform: "uppercase" }}>Level {levelInfo.level} / {levelInfo.maxLevel}</div>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", letterSpacing: 3, textTransform: "uppercase", display: "flex", alignItems: "center" }}>
+                Level {levelInfo.level} / {levelInfo.maxLevel}
+                <InfoTooltip title="Pokemon-Style Leveling">
+                  Your beast earns XP from posting, tipping, swapping, and on-chain actions. Each level unlocks new <b style={{ color: "#00F5FF" }}>skills</b> (Reply Mode, Sniper, Trader+, etc).
+                  <br /><br />
+                  <b style={{ color: "#FF00E1" }}>Plan multipliers:</b> Free 1× / Degen 1.5× / Alpha 2× / Whale 3×
+                  <br /><br />
+                  10 levels: Pup → Hound → Beast → Alpha → Cerberus → Hydra → Titan → Ascended → Mythic → Legend
+                </InfoTooltip>
+              </div>
               <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 32, fontWeight: 900, background: "linear-gradient(90deg, #00F5FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: 2, marginTop: 2 }}>{levelInfo.levelName}</div>
             </div>
             <div style={{ textAlign: "right" }}>
@@ -472,7 +516,23 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
           {/* Unlocked skills */}
           {levelInfo.skills && levelInfo.skills.length > 0 && (
             <div>
-              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Unlocked Skills</div>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center" }}>
+                Unlocked Skills
+                <InfoTooltip title="Agent Skills (MCP-Powered)">
+                  Skills unlock at level thresholds and grant your beast new abilities:
+                  <br /><br />
+                  <b style={{ color: "#00F5FF" }}>L1 Post</b> · tweet on X<br />
+                  <b style={{ color: "#00F5FF" }}>L2 Balance Check</b> · query on-chain<br />
+                  <b style={{ color: "#00F5FF" }}>L3 Reply Mode</b> · respond to @mentions<br />
+                  <b style={{ color: "#00F5FF" }}>L4 Tipster+</b> · custom tip messages<br />
+                  <b style={{ color: "#00F5FF" }}>L5 Sniper</b> · auto-buy detection<br />
+                  <b style={{ color: "#00F5FF" }}>L6 Trader+</b> · multi-leg swaps<br />
+                  <b style={{ color: "#00F5FF" }}>L7 News Hunter</b> · web search→post<br />
+                  <b style={{ color: "#00F5FF" }}>L8 Meme Maker</b> · image gen<br />
+                  <b style={{ color: "#00F5FF" }}>L9 Collab Mode</b> · multi-agent ops<br />
+                  <b style={{ color: "#00F5FF" }}>L10 DAO Voter</b> · governance
+                </InfoTooltip>
+              </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {levelInfo.skills.map((s: any) => (
                   <span key={s.key} title={s.description} style={{
@@ -490,7 +550,12 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
           {/* Achievements */}
           {levelInfo.achievements && levelInfo.achievements.length > 0 && (
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Achievements</div>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center" }}>
+                Achievements
+                <InfoTooltip title="Lifetime Achievements">
+                  Permanent badges earned for milestones: first post, first tip, hitting 1k followers, launching a token, token graduation to Raydium, etc. Achievements grant bonus XP and show on the marketplace.
+                </InfoTooltip>
+              </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {levelInfo.achievements.map((a: any) => (
                   <span key={a.key} title={a.description} style={{
@@ -502,6 +567,27 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
               </div>
             </div>
           )}
+
+          {/* How to Level Up — visible XP table */}
+          <details style={{ marginTop: 16, padding: 12, background: "rgba(0,0,0,0.25)", borderRadius: 8, border: "1px solid rgba(0,245,255,0.15)" }}>
+            <summary style={{ cursor: "pointer", fontFamily: "'Orbitron', sans-serif", fontSize: 11, color: "#00F5FF", letterSpacing: 2, textTransform: "uppercase", fontWeight: 700 }}>
+              ▸ How to Level Up
+            </summary>
+            <div style={{ marginTop: 12, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.75)", lineHeight: 1.9 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "4px 16px" }}>
+                <span>Post a tweet</span><span style={{ color: "#00FFA3" }}>+1 XP</span>
+                <span>Post hits 10+ engagements</span><span style={{ color: "#00FFA3" }}>+10 XP</span>
+                <span>Tip another agent</span><span style={{ color: "#00FFA3" }}>+5 XP</span>
+                <span>Swap on-chain</span><span style={{ color: "#00FFA3" }}>+10 XP</span>
+                <span>Buy your own token</span><span style={{ color: "#00FFA3" }}>+5 XP</span>
+                <span>Launch a token</span><span style={{ color: "#FF00E1" }}>+100 XP</span>
+                <span>Token graduates to Raydium</span><span style={{ color: "#FF00E1" }}>+1000 XP</span>
+              </div>
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.1)", fontSize: 10, color: "rgba(255,255,255,0.5)" }}>
+                XP × plan multiplier (Free 1× · Degen 1.5× · Alpha 2× · Whale 3×). Level thresholds: 100 → 250 → 500 → 1k → 2k → 4k → 8k → 15k → 30k → 60k.
+              </div>
+            </div>
+          </details>
         </div>
       )}
 
@@ -509,7 +595,17 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
       <div style={{ background: "linear-gradient(135deg, rgba(0,245,255,0.05), rgba(255,0,225,0.05))", border: "1px solid rgba(153,69,255,0.3)", borderRadius: 16, padding: 24, boxShadow: "0 0 30px rgba(0,245,255,0.08)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div>
-            <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 14, background: "linear-gradient(90deg, #00F5FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: 3, textTransform: "uppercase" }}>𝕏 Posting Autopilot</div>
+            <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 14, letterSpacing: 3, textTransform: "uppercase", display: "flex", alignItems: "center" }}>
+              <span style={{ background: "linear-gradient(90deg, #00F5FF, #FF00E1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>𝕏 Posting Autopilot</span>
+              <InfoTooltip title="X Posting Autopilot">
+                Your beast posts to your connected X account on a daily schedule. Posts are AI-generated using your fusion&apos;s voice DNA.
+                <br /><br />
+                <b style={{ color: "#00F5FF" }}>Daily limits by plan:</b><br />
+                Free = 3 / Degen = 10 / Alpha = 30 / Whale = 100
+                <br /><br />
+                Posts are spaced ~2 min apart. Auto-pauses on rate limits or auth errors. The cron runs once per day on Vercel Hobby.
+              </InfoTooltip>
+            </div>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 4 }}>Bot posts to your connected X account on schedule</div>
           </div>
           {xp?.enabled && !xp?.paused && (
@@ -532,12 +628,6 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
         {!xp?.xConnected && xp?.kvConfigured && (
           <div style={{ padding: 12, background: "rgba(255,0,225,0.08)", border: "1px solid rgba(255,0,225,0.2)", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#FF00E1", marginBottom: 16 }}>
             Connect your X account (Overview tab) before enabling autopilot.
-          </div>
-        )}
-
-        {freeTier && (
-          <div style={{ padding: 12, background: "rgba(153,69,255,0.08)", border: "1px solid rgba(153,69,255,0.2)", borderRadius: 8, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#9945FF", marginBottom: 16 }}>
-            Free tier doesn&apos;t include autopilot. Upgrade to Degen / Alpha / Whale on the Plans page.
           </div>
         )}
 
@@ -565,15 +655,15 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
         <div style={{ display: "flex", gap: 10 }}>
           <button
             onClick={() => toggleXAutopilot(!xp?.enabled)}
-            disabled={xToggling || freeTier || !xp?.xConnected || !xp?.kvConfigured}
+            disabled={xToggling || !xp?.xConnected || !xp?.kvConfigured}
             style={{
               flex: 1, padding: 14, borderRadius: 10,
-              cursor: (xToggling || freeTier || !xp?.xConnected || !xp?.kvConfigured) ? "not-allowed" : "pointer",
+              cursor: (xToggling || !xp?.xConnected || !xp?.kvConfigured) ? "not-allowed" : "pointer",
               background: xp?.enabled ? "rgba(255,0,225,0.15)" : "linear-gradient(135deg, #00F5FF, #9945FF, #FF00E1)",
               border: xp?.enabled ? "1px solid rgba(255,0,225,0.4)" : "none",
               color: xp?.enabled ? "#FF00E1" : "#000",
               fontFamily: "'Orbitron', sans-serif", fontWeight: 900, fontSize: 13, letterSpacing: 2, textTransform: "uppercase",
-              opacity: (freeTier || !xp?.xConnected || !xp?.kvConfigured) ? 0.4 : 1,
+              opacity: (!xp?.xConnected || !xp?.kvConfigured) ? 0.4 : 1,
             }}
           >
             {xToggling ? "..." : xp?.enabled ? "Disable Autopilot" : "Enable Autopilot"}
@@ -586,6 +676,9 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
             }}>⏸ PAUSE 24H</button>
           )}
         </div>
+
+        {/* Preview what the beast would post next */}
+        <PreviewNextPost personas={agent.personas} fusion={agent.fusion} />
 
         {/* Footer info */}
         <div style={{ marginTop: 14, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "rgba(255,255,255,0.4)", lineHeight: 1.7 }}>
@@ -602,6 +695,11 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
           <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#00FFA3", letterSpacing: 3, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8 }}>
             <img src="/mint-icon.png" alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />
             Beast Wallet
+            <InfoTooltip title="Beast Wallet" color="#00FFA3">
+              A dedicated Solana wallet generated for your agent (private key encrypted server-side with AES-256-GCM). Your beast uses this wallet for autonomous tipping, swapping, and buying its own token.
+              <br /><br />
+              Fund it with SOL to activate on-chain autopilot. View txs on Solscan.
+            </InfoTooltip>
           </div>
           {agent.walletAddress && (
             <a href={`https://solscan.io/account/${agent.walletAddress}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#00F5FF" }}>Solscan ↗</a>
@@ -629,7 +727,18 @@ function AutopilotTab({ agent, onUpdate }: { agent: ChimeraAgent; onUpdate: (u: 
 
       {/* Autopilot Mode */}
       <div style={{ background: "rgba(153,69,255,0.04)", border: "1px solid rgba(153,69,255,0.2)", borderRadius: 16, padding: 24 }}>
-        <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#9945FF", letterSpacing: 3, textTransform: "uppercase", marginBottom: 16 }}>\uD83E\uDD16 Autopilot Mode</div>
+        <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: 11, color: "#9945FF", letterSpacing: 3, textTransform: "uppercase", marginBottom: 16, display: "flex", alignItems: "center" }}>
+          🤖 Autopilot Mode
+          <InfoTooltip title="Autopilot Modes" color="#9945FF">
+            How aggressively your beast acts on-chain:
+            <br /><br />
+            <b style={{ color: "#9945FF" }}>Manual</b> · you trigger every action from the dashboard. Maximum control.
+            <br /><br />
+            <b style={{ color: "#9945FF" }}>On-Post</b> · beast runs one on-chain action (tip, swap, or buy own token) every time it posts on X. Trait-driven decision.
+            <br /><br />
+            <b style={{ color: "#9945FF" }}>Scheduled</b> · beast acts on-chain via daily cron, independent of posting. Whale-tier recommended.
+          </InfoTooltip>
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}>
           {(["manual", "on-post", "scheduled"] as const).map(m => (
             <button key={m} onClick={() => onUpdate({ autopilotMode: m })} style={{
